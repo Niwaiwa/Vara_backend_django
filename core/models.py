@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.hashers import make_password
 from django.db import models
 import uuid
 
@@ -36,9 +37,19 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'username'
     EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['email', 'username']
+    REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
 
     def __str__(self):
         return self.username
+    
+    def has_perm(self, perm, obj=None):
+        "Does the user have a specific permission?"
+        # Simplest possible answer: Yes, always
+        return True
+
+    def has_module_perms(self, app_label):
+        "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, always
+        return True
