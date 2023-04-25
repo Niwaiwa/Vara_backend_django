@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
+import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -142,3 +143,19 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'core.User'
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        # "rest_framework.authentication.BasicAuthentication",
+        # "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
+}
