@@ -3,14 +3,14 @@
 
 ## Required functions
 
-- [ ] User
-  - [ ] Register
-  - [ ] Login
-  - [ ] Logout
-  - [ ] Profile
-    - [ ] Avatar
-    - [ ] Header
-    - [ ] Description
+- [*] User
+  - [*] Register
+  - [*] Login
+  - [*] Logout
+  - [*] Profile
+    - [*] Avatar
+    - [*] Header
+    - [*] Description
   - [ ] Following
   - [ ] Followers
   - [ ] Friends
