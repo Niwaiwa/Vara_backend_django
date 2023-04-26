@@ -3,11 +3,16 @@ from rest_framework import serializers
 
 User = get_user_model()
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'nickname', 'avatar', 'header', 'description')
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'nickname', 'avatar', 'header', 'description', 'locale')
-
+        read_only_fields = ('username',)
 
 class UserSignupSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
@@ -40,4 +45,3 @@ class UserLoginSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'password')
         extra_kwargs = {'password': {'write_only': True, 'required': True, 'style': {'input_type': 'password'}}}
-

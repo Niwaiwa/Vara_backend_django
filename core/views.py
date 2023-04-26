@@ -1,13 +1,15 @@
 from json import JSONDecodeError
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import get_object_or_404
 from rest_framework import views, status
 from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer
+from .models import User
+from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer
 from .utils import get_tokens_for_user
 
 
@@ -55,3 +57,25 @@ class LogoutView(views.APIView):
     def post(self, request):
         logout(request)
         return Response({"result": 'success', 'message': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+
+class UserProfileView(views.APIView):
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username, is_active=True, is_staff=False, is_superuser=False)
+        return Response(UserProfileSerializer(user).data, status=status.HTTP_200_OK)
+
+class UserView(views.APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def get(self, request):
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        data = request.data
+        serializer = UserSerializer(request.user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
