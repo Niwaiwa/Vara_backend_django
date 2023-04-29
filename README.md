@@ -11,8 +11,8 @@
     - [*] Avatar
     - [*] Header
     - [*] Description
-  - [ ] Following
-  - [ ] Followers
+  - [*] Following
+  - [*] Followers
   - [ ] Friends
   - [ ] Posts
   - [ ] Playlists
