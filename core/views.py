@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, Following, Followers
-from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, FollowingListSerializer
+from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
+    FollowingListSerializer, FollowersListSerializer
 from .utils import get_tokens_for_user
 
 
@@ -88,7 +89,6 @@ class UserFollowingView(views.APIView):
         serializer = FollowingListSerializer(followings, many=True)
         return Response(serializer.data)
 
-
 class FollowingView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -132,3 +132,10 @@ class FollowingView(views.APIView):
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
+class UserFollowersView(views.APIView):
+    
+    def get(self, request, user_id):
+        user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
+        followers = Followers.objects.filter(user=user)
+        serializer = FollowersListSerializer(followers, many=True)
+        return Response(serializer.data)

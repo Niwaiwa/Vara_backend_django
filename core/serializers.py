@@ -49,9 +49,18 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
 class FollowingListSerializer(serializers.ModelSerializer):
     user_name = serializers.ReadOnlyField(source='following_user.username')
-    avatar = serializers.ReadOnlyField(source='following_user.avatar')
+    avatar = serializers.ImageField(source='following_user.avatar')
     nickname = serializers.ReadOnlyField(source='following_user.nickname')
 
     class Meta:
         model = Following
-        fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+        fields = ('user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+
+class FollowersListSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='follower_user.username')
+    avatar = serializers.ImageField(source='follower_user.avatar')
+    nickname = serializers.ReadOnlyField(source='follower_user.nickname')
+
+    class Meta:
+        model = Followers
+        fields = ('user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
