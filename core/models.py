@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password
 from django.db import models
+from django.utils import timezone
 import uuid
 
 class UserManager(BaseUserManager):
@@ -53,3 +54,25 @@ class User(AbstractBaseUser):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
         return True
+    
+class Following(models.Model):
+    user = models.ForeignKey('User', related_name='following', on_delete=models.CASCADE)
+    following_user = models.ForeignKey('User', related_name='following_user', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'following_user'], name='unique_following'),
+        ]
+
+class Followers(models.Model):
+    user = models.ForeignKey('User', related_name='followers', on_delete=models.CASCADE)
+    follower_user = models.ForeignKey('User', related_name='followers_user', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'follower_user'], name='unique_followers'),
+        ]
