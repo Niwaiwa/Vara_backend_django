@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import Following, Followers
 
 User = get_user_model()
 
@@ -11,7 +12,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'nickname', 'avatar', 'header', 'description', 'locale')
+        fields = ('id', 'username', 'email', 'nickname', 'avatar', 'header', 'description', 'locale')
         read_only_fields = ('username',)
 
 class UserSignupSerializer(serializers.ModelSerializer):
@@ -45,3 +46,12 @@ class UserLoginSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'password')
         extra_kwargs = {'password': {'write_only': True, 'required': True, 'style': {'input_type': 'password'}}}
+
+class FollowingListSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='following_user.username')
+    avatar = serializers.ReadOnlyField(source='following_user.avatar')
+    nickname = serializers.ReadOnlyField(source='following_user.nickname')
+
+    class Meta:
+        model = Following
+        fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
