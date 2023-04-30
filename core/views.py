@@ -97,19 +97,19 @@ class FollowingView(views.APIView):
             data = JSONParser().parse(request)
             user_id = data.get('user_id')
             if not user_id:
-                return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
             user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
             if user == request.user:
-                return Response({'error': 'You cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"result": 'error', 'message': 'You cannot follow yourself'}, status=status.HTTP_400_BAD_REQUEST)
 
             following = Following.objects.filter(user=request.user, following_user=user)
             if following:
-                return Response({'error': 'You are already following this user'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"result": 'error', 'message': 'You are already following this user'}, status=status.HTTP_400_BAD_REQUEST)
 
             following = Following.objects.create(user=request.user, following_user=user)
             followe = Followers.objects.create(user=user, follower_user=request.user)
-            return Response({'success': True, 'message': f'You are now following {user.username}!'}, status=status.HTTP_200_OK)
+            return Response({"result": 'success', 'message': f'You are now following {user.username}!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -118,17 +118,17 @@ class FollowingView(views.APIView):
             data = JSONParser().parse(request)
             user_id = data.get('user_id')
             if not user_id:
-                return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
 
             following = Following.objects.filter(user=request.user, following_user=user)
             if not following:
-                return Response({'error': 'You are not following this user'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"result": 'error', 'message': 'You are not following this user'}, status=status.HTTP_400_BAD_REQUEST)
             following.delete()
             follower = Followers.objects.filter(user=user, follower_user=request.user)
             if follower:
                 follower.delete()
-            return Response({'success': True, 'message': f'You are no longer following {user.username}!'}, status=status.HTTP_200_OK)
+            return Response({"result": 'success', 'message': f'You are no longer following {user.username}!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
