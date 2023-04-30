@@ -76,3 +76,14 @@ class Followers(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'follower_user'], name='unique_followers'),
         ]
+
+class Friends(models.Model):
+    user = models.ForeignKey('User', related_name='friends', on_delete=models.CASCADE)
+    friend = models.ForeignKey('User', related_name='friends_user', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'friend'], name='unique_friends'),
+        ]
