@@ -13,7 +13,7 @@
     - [*] Description
   - [*] Following
   - [*] Followers
-  - [ ] Friends
+  - [*] Friends
   - [ ] Posts
   - [ ] Playlists
     - [ ] Favorites
