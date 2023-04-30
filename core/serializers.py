@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Following, Followers
+from .models import Following, Followers, Friends, FriendRequest
 
 User = get_user_model()
 
@@ -64,3 +64,23 @@ class FollowersListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Followers
         fields = ('user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+
+class FriendsListSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='user.id')
+    user_name = serializers.ReadOnlyField(source='user.username')
+    avatar = serializers.ImageField(source='user.avatar')
+    nickname = serializers.ReadOnlyField(source='user.nickname')
+
+    class Meta:
+        model = Friends
+        fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+
+class FriendRequestListSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='from_user.id')
+    user_name = serializers.ReadOnlyField(source='from_user.username')
+    avatar = serializers.ImageField(source='from_user.avatar')
+    nickname = serializers.ReadOnlyField(source='from_user.nickname')
+
+    class Meta:
+        model = FriendRequest
+        fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')

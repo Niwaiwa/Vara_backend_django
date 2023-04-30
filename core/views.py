@@ -8,9 +8,9 @@ from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, Following, Followers
+from .models import User, Following, Followers, Friends, FriendRequest
 from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
-    FollowingListSerializer, FollowersListSerializer
+    FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer
 from .utils import get_tokens_for_user
 
 
@@ -139,3 +139,102 @@ class UserFollowersView(views.APIView):
         followers = Followers.objects.filter(user=user)
         serializer = FollowersListSerializer(followers, many=True)
         return Response(serializer.data)
+
+class FriendsView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        friends = Friends.objects.filter(user=request.user)
+        serializer = FriendsListSerializer(friends, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, user_id):
+        try:
+            data = JSONParser().parse(request)
+            request_user_id = data.get('user_id')
+            if not request_user_id:
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user = get_object_or_404(User, pk=request_user_id, is_active=True, is_staff=False, is_superuser=False)
+            if user == request.user:
+                return Response({"result": 'error', 'message': 'You cannot add yourself as a friend'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            friend = Friends.objects.filter(user=request.user, friend=user)
+            if friend:
+                return Response({"result": 'error', 'message': 'You are already a friend of this user'}, status=status.HTTP_400_BAD_REQUEST)
+
+            friend_request = FriendRequest.objects.filter(from_user=request.user, to_user=user)
+            if friend_request:
+                return Response({"result": 'error', 'message': 'You already sent a friend request to this user'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            friend_request = FriendRequest.objects.create(from_user=request.user, to_user=user)
+            return Response({"result": 'success', 'message': f'You sent a friend request to {user.username}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request, user_id):
+        try:
+            data = JSONParser().parse(request)
+            request_user_id = data.get('user_id')
+            if not request_user_id:
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            user = get_object_or_404(User, pk=request_user_id, is_active=True, is_staff=False, is_superuser=False)
+
+            friend = Friends.objects.filter(user=request.user, friend=user)
+            if not friend:
+                return Response({"result": 'error', 'message': 'You are not a friend of this user'}, status=status.HTTP_400_BAD_REQUEST)
+            friend.delete()
+            friend = Friends.objects.filter(user=user, friend=request.user)
+            if friend:
+                friend.delete()
+            return Response({"result": 'success', 'message': f'You are no longer a friend of {user.username}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class FriendRequestView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        friend_requests = FriendRequest.objects.filter(to_user=request.user)
+        serializer = FriendRequestListSerializer(friend_requests, many=True)
+        return Response(serializer.data)
+
+class FriendRequestAcceptView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            data = JSONParser().parse(request)
+            request_user_id = data.get('user_id')
+            if not request_user_id:
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            user = get_object_or_404(User, pk=request_user_id, is_active=True, is_staff=False, is_superuser=False)
+
+            friend_request = FriendRequest.objects.filter(from_user=user, to_user=request.user)
+            if not friend_request:
+                return Response({"result": 'error', 'message': 'You have no friend request from this user'}, status=status.HTTP_400_BAD_REQUEST)
+            friend_request.delete()
+            friend = Friends.objects.create(user=request.user, friend=user)
+            friend = Friends.objects.create(user=user, friend=request.user)
+            return Response({"result": 'success', 'message': f'You are now friends with {user.username}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class FriendRequestRejectView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            data = JSONParser().parse(request)
+            request_user_id = data.get('user_id')
+            if not request_user_id:
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            user = get_object_or_404(User, pk=request_user_id, is_active=True, is_staff=False, is_superuser=False)
+
+            friend_request = FriendRequest.objects.filter(from_user=user, to_user=request.user)
+            if not friend_request:
+                return Response({"result": 'error', 'message': 'You have no friend request from this user'}, status=status.HTTP_400_BAD_REQUEST)
+            friend_request.delete()
+            return Response({"result": 'success', 'message': f'You rejected the friend request from {user.username}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
