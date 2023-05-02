@@ -21,4 +21,5 @@ urlpatterns = [
     path('users/<str:user_id>/friends/requests', views.FriendRequestView.as_view(), name='friend_requests'),
     path('users/<str:user_id>/friends/requests/accept', views.FriendRequestAcceptView.as_view(), name='friend_request_accept'),
     path('users/<str:user_id>/friends/requests/reject', views.FriendRequestRejectView.as_view(), name='friend_request_reject'),
+    path('users/<str:user_id>/friends/requests/cancel', views.FriendRequestCancelView.as_view(), name='friend_request_cancel'),
 ]

@@ -237,3 +237,22 @@ class FriendRequestRejectView(views.APIView):
             return Response({"result": 'success', 'message': f'You rejected the friend request from {user.username}!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class FriendRequestCancelView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            data = JSONParser().parse(request)
+            request_user_id = data.get('user_id')
+            if not request_user_id:
+                return Response({"result": 'error', 'message': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            user = get_object_or_404(User, pk=request_user_id, is_active=True, is_staff=False, is_superuser=False)
+
+            friend_request = FriendRequest.objects.filter(from_user=request.user, to_user=user)
+            if not friend_request:
+                return Response({"result": 'error', 'message': 'You have no friend request to this user'}, status=status.HTTP_400_BAD_REQUEST)
+            friend_request.delete()
+            return Response({"result": 'success', 'message': f'You cancelled the friend request to {user.username}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
