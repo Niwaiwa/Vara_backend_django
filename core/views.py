@@ -11,7 +11,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Following, Followers, Friends, FriendRequest
 from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
     FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer
-from .utils import get_tokens_for_user
 
 
 class SignupView(views.APIView):

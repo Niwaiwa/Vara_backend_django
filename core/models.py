@@ -1,8 +1,14 @@
+import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.utils import timezone
-import uuid
+from utils.commons import UniqueFilename
+
+
+avatar_upload_path = UniqueFilename('avatars/')
+header_upload_path = UniqueFilename('headers/')
+
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
@@ -26,8 +32,8 @@ class User(AbstractBaseUser):
     nickname = models.CharField(max_length=100, blank=True, null=True)
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    header = models.ImageField(upload_to='headers/', blank=True, null=True)
+    avatar = models.ImageField(upload_to=avatar_upload_path, blank=True, null=True)
+    header = models.ImageField(upload_to=header_upload_path, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
