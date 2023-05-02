@@ -62,6 +62,7 @@ class User(AbstractBaseUser):
         return True
     
 class Following(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey('User', related_name='following', on_delete=models.CASCADE)
     following_user = models.ForeignKey('User', related_name='following_user', on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
@@ -73,6 +74,7 @@ class Following(models.Model):
         ]
 
 class Followers(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey('User', related_name='followers', on_delete=models.CASCADE)
     follower_user = models.ForeignKey('User', related_name='followers_user', on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
@@ -84,6 +86,7 @@ class Followers(models.Model):
         ]
 
 class Friends(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey('User', related_name='friends', on_delete=models.CASCADE)
     friend = models.ForeignKey('User', related_name='friends_user', on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
@@ -95,6 +98,7 @@ class Friends(models.Model):
         ]
 
 class FriendRequest(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     from_user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_friend_requests')
     to_user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_friend_requests')
     created_at = models.DateTimeField(auto_now_add=True)
