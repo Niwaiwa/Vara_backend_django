@@ -23,17 +23,25 @@
   - [ ] Notifications settings
   - [ ] Blacklist tags
   - [ ] Polls
-- [ ] Videos
+- [*] Videos
   - [ ] Comments
   - [ ] Views
   - [ ] Likes
-  - [ ] Ratings
+  - [*] Ratings
+  - [ ] Thumbnails
+    - [ ] List view
+    - [ ] Video thumbnails
+    - [ ] Large video thumbnail
 - [ ] Images
   - [ ] Comments
   - [ ] Views
   - [ ] Likes
   - [ ] Ratings
-- [ ] Tags
+  - [ ] Thumbnails
+    - [ ] List view
+    - [ ] Large image thumbnail
+    - [ ] Original images
+- [*] Tags
 - [ ] Forums
   - [ ] Threads
     - [ ] Posts
