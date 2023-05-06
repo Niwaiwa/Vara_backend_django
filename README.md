@@ -32,11 +32,11 @@
     - [ ] List view
     - [ ] Video thumbnails
     - [ ] Large video thumbnail
-- [ ] Images
+- [*] Images
   - [ ] Comments
   - [ ] Views
   - [ ] Likes
-  - [ ] Ratings
+  - [*] Ratings
   - [ ] Thumbnails
     - [ ] List view
     - [ ] Large image thumbnail
