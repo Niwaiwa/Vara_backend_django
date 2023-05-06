@@ -9,7 +9,7 @@ app_name = 'content'
 
 urlpatterns = [
     path('videos', views.VideoListCreateAPIView.as_view(), name='video_list'),
-    path('videos/<str:pk>', views.VideoDetailAPIView.as_view(), name='video_detail'),
+    path('videos/<uuid:pk>', views.VideoDetailAPIView.as_view(), name='video_detail'),
     path('tags', views.TagAPIView.as_view(), name='tag_list'),
     path('images', views.ImageSlideListCreateAPIView.as_view(), name='imageslide_list'),
     path('images/<uuid:pk>', views.ImageSlideDetailAPIView.as_view(), name='imageslide_detail'),
