@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'core',
+    'content',
 ]
 
 MIDDLEWARE = [
@@ -159,3 +160,6 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
 }
+
+CONTENT_PAGE_SIZE = 32
+CORE_PAGE_SIZE = 20
