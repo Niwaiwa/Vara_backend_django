@@ -6,12 +6,12 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import views, status
-from vara_backend.settings import CONTENT_PAGE_SIZE
+from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
-from .models import Video, Tag, ImageSlide, Image
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageLike
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
-    , ImagePostSerializer, ImageSlideDetailSerializer
+    , ImagePostSerializer, ImageSlideDetailSerializer, ImageLikeSerializer, VideoLikeSerializer
 from utils.commons import ReadOnly
 
 sort_map = {
@@ -219,4 +219,78 @@ class ImageDetailAPIView(views.APIView):
     def delete(self, request, images_id, pk):
         image = get_object_or_404(Image, pk=pk)
         image.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class VideoLikeAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, pk):
+        video = get_object_or_404(Video, pk=pk)
+        video_likes = video.likes.all().order_by('-created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(video_likes, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = VideoLikeSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+
+    def post(self, request, pk):
+        video = get_object_or_404(Video, pk=pk)
+        video_like = VideoLike.objects.filter(video=video, user=request.user)
+        if video_like:
+            return Response({"result": 'error', 'message': 'You are already liked this video'}, status=status.HTTP_400_BAD_REQUEST)
+        video_like = VideoLike.objects.create(video=video, user=request.user)
+        video.increment_likes_count()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class VideoUnlikeAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def post(self, request, pk):
+        video = get_object_or_404(Video, pk=pk)
+        video_like = VideoLike.objects.filter(video=video, user=request.user)
+        if not video_like:
+            return Response({"result": 'error', 'message': 'You are not liked this video'}, status=status.HTTP_400_BAD_REQUEST)
+        video_like.delete()
+        video.decrement_likes_count()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ImageSlideLikeAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, pk):
+        image = get_object_or_404(ImageSlide, pk=pk)
+        image_likes = image.likes.all().order_by('-created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(image_likes, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = ImageLikeSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+
+    def post(self, request, pk):
+        slide = get_object_or_404(ImageSlide, pk=pk)
+        images_like = ImageLike.objects.filter(slide=slide, user=request.user)
+        if images_like:
+            return Response({"result": 'error', 'message': 'You are already liked this images'}, status=status.HTTP_400_BAD_REQUEST)
+        images_like = ImageLike.objects.create(slide=slide, user=request.user)
+        slide.increment_likes_count()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ImageSlideUnLikeAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def post(self, request, pk):
+        slide = get_object_or_404(ImageSlide, pk=pk)
+        images_like = ImageLike.objects.filter(slide=slide, user=request.user)
+        if not images_like:
+            return Response({"result": 'error', 'message': 'You are not liked this images'}, status=status.HTTP_400_BAD_REQUEST)
+        images_like.delete()
+        slide.decrement_likes_count()
         return Response(status=status.HTTP_204_NO_CONTENT)
