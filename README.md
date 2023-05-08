@@ -25,8 +25,8 @@
   - [ ] Polls
 - [*] Videos
   - [ ] Comments
-  - [ ] Views
-  - [ ] Likes
+  - [*] Views
+  - [*] Likes
   - [*] Ratings
   - [ ] Thumbnails
     - [ ] List view
@@ -34,8 +34,8 @@
     - [ ] Large video thumbnail
 - [*] Images
   - [ ] Comments
-  - [ ] Views
-  - [ ] Likes
+  - [*] Views
+  - [*] Likes
   - [*] Ratings
   - [ ] Thumbnails
     - [ ] List view
