@@ -53,6 +53,10 @@ class Video(models.Model):
         self.likes_count += 1
         self.save(update_fields=['likes_count'])
 
+    def decrement_likes_count(self):
+        self.likes_count -= 1
+        self.save(update_fields=['likes_count'])
+
  
 class ImageSlide(models.Model):
     RATING_CHOICES = [
@@ -85,6 +89,10 @@ class ImageSlide(models.Model):
         self.likes_count += 1
         self.save(update_fields=['likes_count'])
 
+    def decrement_likes_count(self):
+        self.likes_count -= 1
+        self.save(update_fields=['likes_count'])
+
 
 class Image(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -99,12 +107,15 @@ class Image(models.Model):
 
 class ImageLike(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='likes')
+    slide = models.ForeignKey(ImageSlide, on_delete=models.CASCADE, related_name='likes')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_likes')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['slide', 'user'], name='unique_slide_like')
+        ]
 
 
 class VideoLike(models.Model):
@@ -115,3 +126,6 @@ class VideoLike(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['video', 'user'], name='unique_video_like')
+        ]
