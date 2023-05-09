@@ -144,7 +144,7 @@ class VideoComment(models.Model):
         ordering = ['-created_at']
 
 
-class ImageComment(models.Model):
+class ImageSlideComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slide = models.ForeignKey(ImageSlide, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_comments')
