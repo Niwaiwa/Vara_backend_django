@@ -129,3 +129,29 @@ class VideoLike(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['video', 'user'], name='unique_video_like')
         ]
+
+
+class VideoComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='video_comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent_comment = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='replies', null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class ImageComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slide = models.ForeignKey(ImageSlide, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent_comment = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='replies', null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
