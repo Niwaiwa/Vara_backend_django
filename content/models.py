@@ -105,7 +105,7 @@ class Image(models.Model):
         ordering = ['-created_at']
 
 
-class ImageLike(models.Model):
+class ImageSlideLike(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slide = models.ForeignKey(ImageSlide, on_delete=models.CASCADE, related_name='likes')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='image_likes')

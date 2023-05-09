@@ -8,10 +8,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import views, status
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageLike
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
-    , ImagePostSerializer, ImageSlideDetailSerializer, ImageLikeSerializer, VideoLikeSerializer
+    , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer
 from utils.commons import ReadOnly
 
 sort_map = {
@@ -269,16 +269,16 @@ class ImageSlideLikeAPIView(views.APIView):
         page = request.GET.get('page', 1)
         paginator = Paginator(image_likes, SMALL_PAGE_SIZE)
         page_obj = paginator.get_page(page)
-        serializer = ImageLikeSerializer(page_obj, many=True)
+        serializer = ImageSlideLikeSerializer(page_obj, many=True)
         return Response(serializer.data)
 
 
     def post(self, request, pk):
         slide = get_object_or_404(ImageSlide, pk=pk)
-        images_like = ImageLike.objects.filter(slide=slide, user=request.user)
+        images_like = ImageSlideLike.objects.filter(slide=slide, user=request.user)
         if images_like:
             return Response({"result": 'error', 'message': 'You are already liked this images'}, status=status.HTTP_400_BAD_REQUEST)
-        images_like = ImageLike.objects.create(slide=slide, user=request.user)
+        images_like = ImageSlideLike.objects.create(slide=slide, user=request.user)
         slide.increment_likes_count()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -288,7 +288,7 @@ class ImageSlideUnLikeAPIView(views.APIView):
 
     def post(self, request, pk):
         slide = get_object_or_404(ImageSlide, pk=pk)
-        images_like = ImageLike.objects.filter(slide=slide, user=request.user)
+        images_like = ImageSlideLike.objects.filter(slide=slide, user=request.user)
         if not images_like:
             return Response({"result": 'error', 'message': 'You are not liked this images'}, status=status.HTTP_400_BAD_REQUEST)
         images_like.delete()

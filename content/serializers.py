@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageLike
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike
 
 
 class UUIDField(serializers.Field):
@@ -124,11 +124,11 @@ class VideoLikeSerializer(serializers.ModelSerializer):
         fields = ('user_name', 'nickname', 'avatar', 'created_at')
 
 
-class ImageLikeSerializer(serializers.ModelSerializer):
+class ImageSlideLikeSerializer(serializers.ModelSerializer):
     user_name = serializers.ReadOnlyField(source='user.username')
     avatar = serializers.ImageField(source='user.avatar')
     nickname = serializers.ReadOnlyField(source='user.nickname')
 
     class Meta:
-        model = ImageLike
+        model = ImageSlideLike
         fields = ('user_name', 'nickname', 'avatar', 'created_at')
