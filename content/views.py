@@ -8,10 +8,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import views, status
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, VideoComment, ImageSlideComment
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
-    , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer
+    , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer \
+    , ImageSlideCommentSerializer, VideoCommentSerializer, VideoCommentPostSerializer \
+    , ImageSlideCommentPostSerializer, VideoCommentParamSerializer, ImageSlideCommentParamSerializer \
+    , ImageSlideCommentPutSerializer, VideoCommentPutSerializer
 from utils.commons import ReadOnly
 
 sort_map = {
@@ -294,3 +297,82 @@ class ImageSlideUnLikeAPIView(views.APIView):
         images_like.delete()
         slide.decrement_likes_count()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class VideoCommentListCreateAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, video_id):
+        video = get_object_or_404(Video, pk=video_id)
+        video_comments = video.comments.filter(parent_comment=None).order_by('created_at')
+
+        query = VideoCommentParamSerializer(data=request.query_params)
+        if query.is_valid():
+            parent_comment_id = query.validated_data.get('parent')
+            if parent_comment_id:
+                video_comment = video.comments.filter(pk=parent_comment_id).first()
+                if video_comment:
+                    video_comments = video.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(video_comments, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = VideoCommentSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, video_id):
+        try:
+            video = get_object_or_404(Video, pk=video_id)
+            data = JSONParser().parse(request)
+            serializer = VideoCommentPostSerializer(data=data)
+            if serializer.is_valid():
+                parent_comment_id = serializer.validated_data.get('parent_comment_id')
+                if parent_comment_id:
+                    video_comment = video.comments.filter(pk=parent_comment_id).first()
+                    if video_comment:
+                        serializer.save(video=video, user=request.user, parent_comment=video_comment)   
+                        response_serializer = VideoCommentSerializer(serializer.instance)
+                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    serializer.save(video=video, user=request.user)
+                    response_serializer = VideoCommentSerializer(serializer.instance)
+                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class VideoCommentDetailAPIView(views.APIView):
+
+    def put(self, request, video_id, comment_id):
+        try:
+            video = get_object_or_404(Video, pk=video_id)
+            data = JSONParser().parse(request)
+            serializer = VideoCommentPutSerializer(data=data)
+            if serializer.is_valid():
+                video_comment = video.comments.filter(user=request.user, pk=comment_id).first()
+                if video_comment:
+                    video_comment.content = serializer.validated_data.get('content')
+                    video_comment.save()
+                    response_serializer = VideoCommentSerializer(video_comment)
+                    return Response(response_serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, video_id, comment_id):
+        try:
+            video = get_object_or_404(Video, pk=video_id)
+            video_comment = video.comments.filter(user=request.user, pk=comment_id).first()
+            if video_comment:
+                video_comment.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:    
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
