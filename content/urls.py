@@ -21,4 +21,6 @@ urlpatterns = [
     path('images/<uuid:pk>/unlike', views.ImageSlideUnLikeAPIView.as_view(), name='imageslide_unlike'),
     path('images/<uuid:images_id>/image', views.ImageListCreateAPIView.as_view(), name='image_list'),
     path('images/<uuid:images_id>/image/<uuid:pk>', views.ImageDetailAPIView.as_view(), name='image_detail'),
+    path('images/<uuid:images_id>/comments', views.ImageSlideCommentListCreateAPIView.as_view(), name='imageslide_comment_list'),
+    path('images/<uuid:images_id>/comments/<uuid:comment_id>', views.ImageSlideCommentDetailAPIView.as_view(), name='imageslide_comment_detail'),
 ]

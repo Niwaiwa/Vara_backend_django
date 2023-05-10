@@ -345,6 +345,7 @@ class VideoCommentListCreateAPIView(views.APIView):
         
 
 class VideoCommentDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
 
     def put(self, request, video_id, comment_id):
         try:
@@ -376,3 +377,81 @@ class VideoCommentDetailAPIView(views.APIView):
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ImageSlideCommentListCreateAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, images_id):
+        slide = get_object_or_404(ImageSlide, pk=images_id)
+        image_comments = slide.comments.filter(parent_comment=None).order_by('created_at')
+
+        query = ImageSlideCommentParamSerializer(data=request.query_params)
+        if query.is_valid():
+            parent_comment_id = query.validated_data.get('parent')
+            if parent_comment_id:
+                image_comment = slide.comments.filter(pk=parent_comment_id).first()
+                if image_comment:
+                    image_comments = slide.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(image_comments, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = ImageSlideCommentSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, images_id):
+        try:
+            slide = get_object_or_404(ImageSlide, pk=images_id)
+            data = JSONParser().parse(request)
+            serializer = ImageSlideCommentPostSerializer(data=data)
+            if serializer.is_valid():
+                parent_comment_id = serializer.validated_data.get('parent_comment_id')
+                if parent_comment_id:
+                    image_comment = slide.comments.filter(pk=parent_comment_id).first()
+                    if image_comment:
+                        serializer.save(slide=slide, user=request.user, parent_comment=image_comment)   
+                        response_serializer = ImageSlideCommentSerializer(serializer.instance)
+                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    serializer.save(slide=slide, user=request.user)
+                    response_serializer = ImageSlideCommentSerializer(serializer.instance)
+                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ImageSlideCommentDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def put(self, request, images_id, comment_id):
+        try:
+            slide = get_object_or_404(ImageSlide, pk=images_id)
+            data = JSONParser().parse(request)
+            serializer = ImageSlideCommentPutSerializer(data=data)
+            if serializer.is_valid():
+                image_comment = slide.comments.filter(user=request.user, pk=comment_id).first()
+                if image_comment:
+                    image_comment.content = serializer.validated_data.get('content')
+                    image_comment.save()
+                    response_serializer = ImageSlideCommentSerializer(image_comment)
+                    return Response(response_serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, images_id, comment_id):
+        try:
+            slide = get_object_or_404(ImageSlide, pk=images_id)
+            image_comment = slide.comments.filter(user=request.user, pk=comment_id).first()
+            if image_comment:
+                image_comment.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:    
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
