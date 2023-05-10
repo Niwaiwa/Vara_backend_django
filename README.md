@@ -24,7 +24,7 @@
   - [ ] Blacklist tags
   - [ ] Polls
 - [*] Videos
-  - [ ] Comments
+  - [*] Comments
   - [*] Views
   - [*] Likes
   - [*] Ratings
@@ -33,7 +33,7 @@
     - [ ] Video thumbnails
     - [ ] Large video thumbnail
 - [*] Images
-  - [ ] Comments
+  - [*] Comments
   - [*] Views
   - [*] Likes
   - [*] Ratings
