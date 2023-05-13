@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.utils import timezone
 from utils.commons import UniqueFilename
+from content.models import Video
 
 
 avatar_upload_path = UniqueFilename('avatars/')
@@ -109,3 +110,12 @@ class FriendRequest(models.Model):
             models.UniqueConstraint(
                 fields=['from_user', 'to_user'], name='unique_friend_request')
         ]
+
+
+class Playlist(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('User', related_name='playlists', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    videos = models.ManyToManyField(Video, related_name='playlists', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
