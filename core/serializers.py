@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Following, Followers, Friends, FriendRequest
+from .models import Following, Followers, Friends, FriendRequest, Playlist
+from content.serializers import VideoSerializer
+
 
 User = get_user_model()
 
@@ -36,7 +38,6 @@ class UserSignupSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'password1', 'password2')
         extra_kwargs = {'password': {'write_only': True, 'required': True, 'style': {'input_type': 'password'}}}
-
 
 class UserLoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True, required=True)
@@ -84,3 +85,29 @@ class FriendRequestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
         fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+
+class PlaylistSerializer(serializers.ModelSerializer):
+    video_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Playlist
+        fields = ('id', 'name', 'created_at', 'video_count')
+
+    def get_video_count(self, obj):
+        return obj.videos.count()
+
+class PlaylistNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Playlist
+        fields = ('id', 'name', 'created_at')
+
+class PlaylistDetailSerializer(serializers.ModelSerializer):
+    video_count = serializers.SerializerMethodField()
+    videos = VideoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Playlist
+        fields = ('id', 'name', 'created_at', 'video_count', 'videos')
+
+    def get_video_count(self, obj):
+        return obj.videos.count()

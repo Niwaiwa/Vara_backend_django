@@ -8,9 +8,12 @@ from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, Following, Followers, Friends, FriendRequest
+from .models import User, Following, Followers, Friends, FriendRequest, Playlist
+from content.models import Video
 from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
-    FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer
+    FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer, \
+    PlaylistSerializer, PlaylistDetailSerializer, PlaylistNameSerializer
+from utils.commons import ReadOnly
 
 
 class SignupView(views.APIView):
@@ -256,3 +259,67 @@ class FriendRequestCancelView(views.APIView):
             return Response({"result": 'success', 'message': f'You cancelled the friend request to {user.username}!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfilePlaylistView(views.APIView):
+
+    def get(self, request, username):
+        playlists = Playlist.objects.filter(user__username=username)
+        serializer = PlaylistSerializer(playlists, many=True)
+        return Response(serializer.data)
+
+class PlaylistView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        playlists = Playlist.objects.filter(user=request.user)
+        serializer = PlaylistNameSerializer(playlists, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        try:
+            data = JSONParser().parse(request)
+            name = data.get('name')
+            if not name:
+                return Response({"result": 'error', 'message': 'name is required'}, status=status.HTTP_400_BAD_REQUEST)
+            playlist = Playlist.objects.filter(user=request.user, name=name)
+            if playlist:
+                return Response({"result": 'error', 'message': 'You already have a playlist with this name'}, status=status.HTTP_400_BAD_REQUEST)
+            playlist = Playlist.objects.create(user=request.user, name=name)
+            return Response({"result": 'success', 'message': f'You created a playlist {playlist.name}!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class PlaylistDetailView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, playlist_id):
+        playlist = get_object_or_404(Playlist, pk=playlist_id, user=request.user)
+        serializer = PlaylistDetailSerializer(playlist)
+        return Response(serializer.data)
+
+    def delete(self, request, playlist_id):
+        playlist = get_object_or_404(Playlist, pk=playlist_id, user=request.user)
+        playlist.delete()
+        return Response({"result": 'success', 'message': f'You deleted the playlist {playlist.name}!'}, status=status.HTTP_200_OK)
+    
+class PlaylistVideoView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, playlist_id, video_id):
+        playlist = get_object_or_404(Playlist, pk=playlist_id, user=request.user)
+        video = get_object_or_404(Video, pk=video_id)
+        playlist_video = playlist.videos.filter(pk=video_id)
+        if playlist_video:
+            return Response({"result": 'error', 'message': f'You already have the video {video.title} in the playlist {playlist.name}!'}, status=status.HTTP_400_BAD_REQUEST)
+        playlist.videos.add(video)
+        return Response({"result": 'success', 'message': f'You added the video {video.title} to the playlist {playlist.name}!'}, status=status.HTTP_200_OK)
+
+    def delete(self, request, playlist_id, video_id):
+        playlist = get_object_or_404(Playlist, pk=playlist_id, user=request.user)
+        video = get_object_or_404(Video, pk=video_id)
+        playlist_video = playlist.videos.filter(pk=video_id)
+        if not playlist_video:
+            return Response({"result": 'error', 'message': f'You don\'t have the video {video.title} in the playlist {playlist.name}!'}, status=status.HTTP_400_BAD_REQUEST)
+        playlist.videos.remove(video)
+        return Response({"result": 'success', 'message': f'You removed the video {video.title} from the playlist {playlist.name}!'}, status=status.HTTP_200_OK)
