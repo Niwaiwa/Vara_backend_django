@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import views, status
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
+
 from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
@@ -15,7 +16,8 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , ImageSlideCommentSerializer, VideoCommentSerializer, VideoCommentPostSerializer \
     , ImageSlideCommentPostSerializer, VideoCommentParamSerializer, ImageSlideCommentParamSerializer \
     , ImageSlideCommentPutSerializer, VideoCommentPutSerializer, PlaylistSerializer, PlaylistNameSerializer \
-    , PlaylistDetailSerializer
+    , PlaylistDetailSerializer, UserIDParamSerializer
+from core.models import User
 from utils.commons import ReadOnly
 
 sort_map = {
@@ -458,21 +460,35 @@ class ImageSlideCommentDetailAPIView(views.APIView):
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfilePlaylistView(views.APIView):
-
-    def get(self, request, username):
-        playlists = Playlist.objects.filter(user__username=username)
-        serializer = PlaylistSerializer(playlists, many=True)
-        return Response(serializer.data)
-
-
 class PlaylistView(views.APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page)
+        return page_obj
 
     def get(self, request):
-        playlists = Playlist.objects.filter(user=request.user)
-        serializer = PlaylistNameSerializer(playlists, many=True)
-        return Response(serializer.data)
+        if request.user.is_authenticated:
+            playlists = Playlist.objects.filter(user=request.user)
+            page_obj = self.paginate_queryset(playlists, CONTENT_PAGE_SIZE)
+            if request.query_params.get('type') == 'name':
+                serializer = PlaylistNameSerializer(page_obj, many=True)
+            else:
+                serializer = PlaylistSerializer(page_obj, many=True)
+            return Response(serializer.data)
+        else:
+            query = UserIDParamSerializer(data=request.query_params)
+            if query.is_valid():
+                user_id = query.validated_data.get('user_id')
+                if user_id:
+                    user = get_object_or_404(User, pk=user_id)
+                    playlists = Playlist.objects.filter(user=user)
+                    page_obj = self.paginate_queryset(playlists, CONTENT_PAGE_SIZE)
+                    serializer = PlaylistSerializer(page_obj, many=True)
+                    return Response(serializer.data)
+            return Response([])
 
     def post(self, request):
         try:

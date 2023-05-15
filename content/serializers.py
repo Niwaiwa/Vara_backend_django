@@ -190,6 +190,8 @@ class ImageSlideCommentParamSerializer(serializers.Serializer):
     parent = serializers.UUIDField(required=False)
 
 
+class UserIDParamSerializer(serializers.Serializer):
+    user_id = serializers.UUIDField()
 
 class PlaylistSerializer(serializers.ModelSerializer):
     video_count = serializers.SerializerMethodField()

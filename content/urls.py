@@ -26,5 +26,4 @@ urlpatterns = [
     path('playlists', views.PlaylistView.as_view(), name='playlist_list'),
     path('playlists/<uuid:playlist_id>', views.PlaylistDetailView.as_view(), name='playlist_detail'),
     path('playlists/<uuid:playlist_id>/<uuid:video_id>', views.PlaylistVideoView.as_view(), name='playlist_video'),
-    path('users/profile/<str:username>/playlists', views.UserProfilePlaylistView.as_view(), name='user_profile_playlist'),
 ]
