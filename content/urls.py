@@ -23,4 +23,8 @@ urlpatterns = [
     path('images/<uuid:images_id>/image/<uuid:pk>', views.ImageDetailAPIView.as_view(), name='image_detail'),
     path('images/<uuid:images_id>/comments', views.ImageSlideCommentListCreateAPIView.as_view(), name='imageslide_comment_list'),
     path('images/<uuid:images_id>/comments/<uuid:comment_id>', views.ImageSlideCommentDetailAPIView.as_view(), name='imageslide_comment_detail'),
+    path('playlists', views.PlaylistView.as_view(), name='playlist_list'),
+    path('playlists/<uuid:playlist_id>', views.PlaylistDetailView.as_view(), name='playlist_detail'),
+    path('playlists/<uuid:playlist_id>/<uuid:video_id>', views.PlaylistVideoView.as_view(), name='playlist_video'),
+    path('users/profile/<str:username>/playlists', views.UserProfilePlaylistView.as_view(), name='user_profile_playlist'),
 ]

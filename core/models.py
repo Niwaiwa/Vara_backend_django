@@ -4,7 +4,6 @@ from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.utils import timezone
 from utils.commons import UniqueFilename
-from content.models import Video
 
 
 avatar_upload_path = UniqueFilename('avatars/')

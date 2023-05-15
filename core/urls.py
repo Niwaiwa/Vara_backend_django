@@ -14,7 +14,6 @@ urlpatterns = [
     path('users/logout', views.LogoutView.as_view(), name='logout'),
     path('users/user', views.UserView.as_view(), name='user_detail'),
     path('users/profile/<str:username>', views.UserProfileView.as_view(), name='user_profile'),
-    path('users/profile/<str:username>/playlists', views.UserProfilePlaylistView.as_view(), name='user_profile_playlist'),
     path('users/<str:user_id>/followers', views.UserFollowersView.as_view(), name='user_followers'),
     path('users/<str:user_id>/following', views.UserFollowingView.as_view(), name='user_following'),
     path('users/following', views.FollowingView.as_view(), name='following'),
@@ -23,7 +22,4 @@ urlpatterns = [
     path('users/<str:user_id>/friends/requests/accept', views.FriendRequestAcceptView.as_view(), name='friend_request_accept'),
     path('users/<str:user_id>/friends/requests/reject', views.FriendRequestRejectView.as_view(), name='friend_request_reject'),
     path('users/<str:user_id>/friends/requests/cancel', views.FriendRequestCancelView.as_view(), name='friend_request_cancel'),
-    path('playlists', views.PlaylistView.as_view(), name='playlist_list'),
-    path('playlists/<uuid:playlist_id>', views.PlaylistDetailView.as_view(), name='playlist_detail'),
-    path('playlists/<uuid:playlist_id>/<uuid:video_id>', views.PlaylistVideoView.as_view(), name='playlist_video'),
 ]
