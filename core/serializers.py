@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Following, Followers, Friends, FriendRequest, Playlist
+from .models import Following, Followers, Friends, FriendRequest
 from content.serializers import VideoSerializer
 
 
@@ -85,29 +85,3 @@ class FriendRequestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
         fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
-
-class PlaylistSerializer(serializers.ModelSerializer):
-    video_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Playlist
-        fields = ('id', 'name', 'created_at', 'video_count')
-
-    def get_video_count(self, obj):
-        return obj.videos.count()
-
-class PlaylistNameSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Playlist
-        fields = ('id', 'name', 'created_at')
-
-class PlaylistDetailSerializer(serializers.ModelSerializer):
-    video_count = serializers.SerializerMethodField()
-    videos = VideoSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Playlist
-        fields = ('id', 'name', 'created_at', 'video_count', 'videos')
-
-    def get_video_count(self, obj):
-        return obj.videos.count()
