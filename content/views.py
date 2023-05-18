@@ -470,8 +470,9 @@ class PlaylistAPIView(views.APIView):
         return page_obj
 
     def get(self, request):
+        order_by = '-created_at'
         if request.user.is_authenticated:
-            playlists = Playlist.objects.filter(user=request.user)
+            playlists = Playlist.objects.filter(user=request.user).order_by(order_by)
             page_obj = self.paginate_queryset(playlists, CONTENT_PAGE_SIZE)
             if request.query_params.get('type') == 'name':
                 serializer = PlaylistNameSerializer(page_obj, many=True)
@@ -484,7 +485,7 @@ class PlaylistAPIView(views.APIView):
                 user_id = query.validated_data.get('user_id')
                 if user_id:
                     user = get_object_or_404(User, pk=user_id)
-                    playlists = Playlist.objects.filter(user=user)
+                    playlists = Playlist.objects.filter(user=user).order_by(order_by)
                     page_obj = self.paginate_queryset(playlists, CONTENT_PAGE_SIZE)
                     serializer = PlaylistSerializer(page_obj, many=True)
                     return Response(serializer.data)
