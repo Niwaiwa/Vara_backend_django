@@ -241,3 +241,31 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = '__all__'
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+    avatar = serializers.ImageField(source='user.avatar')
+    nickname = serializers.ReadOnlyField(source='user.nickname')
+
+    class Meta:
+        model = PostComment
+        fields = ('id', 'content', 'user_name', 'nickname', 'avatar', 'created_at', 'parent_comment_id')
+
+
+class PostCommentPostSerializer(serializers.ModelSerializer):
+    parent_comment_id = serializers.UUIDField(required=False)
+
+    class Meta:
+        model = PostComment
+        fields = ('content', 'parent_comment_id')
+
+
+class PostCommentPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostComment
+        fields = ('content',)
+
+
+class PostCommentParamSerializer(serializers.Serializer):
+    parent = serializers.UUIDField(required=False)

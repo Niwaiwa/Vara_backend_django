@@ -16,7 +16,8 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , ImageSlideCommentSerializer, VideoCommentSerializer, VideoCommentPostSerializer \
     , ImageSlideCommentPostSerializer, VideoCommentParamSerializer, ImageSlideCommentParamSerializer \
     , ImageSlideCommentPutSerializer, VideoCommentPutSerializer, PlaylistSerializer, PlaylistNameSerializer \
-    , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer
+    , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer \
+    , PostCommentSerializer, PostCommentPostSerializer, PostCommentPutSerializer, PostCommentParamSerializer
 from core.models import User
 from utils.commons import ReadOnly
 
@@ -608,3 +609,82 @@ class PostDetailAPIView(views.APIView):
         post = get_object_or_404(Post, pk=post_id, user=request.user)
         post.delete()
         return Response({"result": 'success', 'message': f'You deleted the post!'}, status=status.HTTP_200_OK)
+    
+
+class PostCommentListCreateAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, post_id):
+        post = get_object_or_404(Post, pk=post_id)
+        post_comments = post.comments.filter(parent_comment=None).order_by('created_at')
+
+        query = PostCommentParamSerializer(data=request.query_params)
+        if query.is_valid():
+            parent_comment_id = query.validated_data.get('parent')
+            if parent_comment_id:
+                post_comment = post.comments.filter(pk=parent_comment_id).first()
+                if post_comment:
+                    post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(post_comments, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = PostCommentSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, post_id):
+        try:
+            post = get_object_or_404(Post, pk=post_id)
+            data = JSONParser().parse(request)
+            serializer = PostCommentPostSerializer(data=data)
+            if serializer.is_valid():
+                parent_comment_id = serializer.validated_data.get('parent_comment_id')
+                if parent_comment_id:
+                    post_comment = post.comments.filter(pk=parent_comment_id).first()
+                    if post_comment:
+                        serializer.save(post=post, user=request.user, parent_comment=post_comment)   
+                        response_serializer = PostCommentSerializer(serializer.instance)
+                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    serializer.save(post=post, user=request.user)
+                    response_serializer = PostCommentSerializer(serializer.instance)
+                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class PostCommentDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def put(self, request, post_id, comment_id):
+        try:
+            post = get_object_or_404(Post, pk=post_id)
+            data = JSONParser().parse(request)
+            serializer = PostCommentPutSerializer(data=data)
+            if serializer.is_valid():
+                post_comment = post.comments.filter(user=request.user, pk=comment_id).first()
+                if post_comment:
+                    post_comment.content = serializer.validated_data.get('content')
+                    post_comment.save()
+                    response_serializer = PostCommentSerializer(post_comment)
+                    return Response(response_serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, post_id, comment_id):
+        try:
+            post = get_object_or_404(Post, pk=post_id)
+            post_comment = post.comments.filter(user=request.user, pk=comment_id).first()
+            if post_comment:
+                post_comment.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)

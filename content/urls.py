@@ -28,4 +28,6 @@ urlpatterns = [
     path('playlists/<uuid:playlist_id>/<uuid:video_id>', views.PlaylistVideoAPIView.as_view(), name='playlist_video'),
     path('posts', views.PostAPIView.as_view(), name='post_list'),
     path('posts/<uuid:post_id>', views.PostDetailAPIView.as_view(), name='post_detail'),
+    path('posts/<uuid:post_id>/comments', views.PostCommentListCreateAPIView.as_view(), name='post_comment_list'),
+    path('posts/<uuid:post_id>/comments/<uuid:comment_id>', views.PostCommentDetailAPIView.as_view(), name='post_comment_detail'),
 ]
