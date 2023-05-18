@@ -146,6 +146,24 @@ class VideoCommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'content', 'user_name', 'nickname', 'avatar', 'created_at', 'parent_comment_id')
 
 
+class VideoCommentPostSerializer(serializers.ModelSerializer):
+    parent_comment_id = serializers.UUIDField(required=False)
+
+    class Meta:
+        model = VideoComment
+        fields = ('content', 'parent_comment_id')
+
+
+class VideoCommentPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoComment
+        fields = ('content',)
+
+
+class VideoCommentParamSerializer(serializers.Serializer):
+    parent = serializers.UUIDField(required=False)
+
+
 class ImageSlideCommentSerializer(serializers.ModelSerializer):
     user_name = serializers.ReadOnlyField(source='user.username')
     avatar = serializers.ImageField(source='user.avatar')
@@ -156,14 +174,6 @@ class ImageSlideCommentSerializer(serializers.ModelSerializer):
         fields = ('id', 'content', 'user_name', 'nickname', 'avatar', 'created_at', 'parent_comment_id')
 
 
-class VideoCommentPostSerializer(serializers.ModelSerializer):
-    parent_comment_id = serializers.UUIDField(required=False)
-
-    class Meta:
-        model = VideoComment
-        fields = ('content', 'parent_comment_id')
-
-
 class ImageSlideCommentPostSerializer(serializers.ModelSerializer):
     parent_comment_id = serializers.UUIDField(required=False)
 
@@ -172,20 +182,10 @@ class ImageSlideCommentPostSerializer(serializers.ModelSerializer):
         fields = ('content', 'parent_comment_id')
 
 
-class VideoCommentPutSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VideoComment
-        fields = ('content',)
-
-
 class ImageSlideCommentPutSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageSlideComment
         fields = ('content',)
-
-
-class VideoCommentParamSerializer(serializers.Serializer):
-    parent = serializers.UUIDField(required=False)
 
 
 class ImageSlideCommentParamSerializer(serializers.Serializer):
