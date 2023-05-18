@@ -460,7 +460,7 @@ class ImageSlideCommentDetailAPIView(views.APIView):
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PlaylistView(views.APIView):
+class PlaylistAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def paginate_queryset(self, queryset, page_size):
@@ -505,7 +505,7 @@ class PlaylistView(views.APIView):
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PlaylistDetailView(views.APIView):
+class PlaylistDetailAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def get(self, request, playlist_id):
@@ -519,7 +519,7 @@ class PlaylistDetailView(views.APIView):
         return Response({"result": 'success', 'message': f'You deleted the playlist {playlist.name}!'}, status=status.HTTP_200_OK)
 
 
-class PlaylistVideoView(views.APIView):
+class PlaylistVideoAPIView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, playlist_id, video_id):
