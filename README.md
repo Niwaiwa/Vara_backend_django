@@ -14,7 +14,8 @@
   - [*] Following
   - [*] Followers
   - [*] Friends
-  - [ ] Posts
+  - [*] Posts
+    - [*] Comments
   - [*] Playlists
   - [ ] Comments
   - [ ] Messages
