@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, VideoComment, ImageSlideComment, Playlist
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, \
+    VideoComment, ImageSlideComment, Playlist, Post, PostComment
 
 
 class UUIDField(serializers.Field):
@@ -107,6 +108,7 @@ class ImageSlidePostSerializer(serializers.ModelSerializer):
             image_slide.tags.add(tag)
         return image_slide
 
+
 class ImageSlidePutSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageSlide
@@ -193,6 +195,7 @@ class ImageSlideCommentParamSerializer(serializers.Serializer):
 class UserIDParamSerializer(serializers.Serializer):
     user_id = serializers.UUIDField()
 
+
 class PlaylistSerializer(serializers.ModelSerializer):
     video_count = serializers.SerializerMethodField()
 
@@ -220,3 +223,21 @@ class PlaylistDetailSerializer(serializers.ModelSerializer):
 
     def get_video_count(self, obj):
         return obj.videos.count()
+    
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
+
+
+class PostEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ('title', 'content')
+
+
+class PostDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'

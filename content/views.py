@@ -9,14 +9,14 @@ from rest_framework import views, status
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
 
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist, Post, PostComment
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
     , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer \
     , ImageSlideCommentSerializer, VideoCommentSerializer, VideoCommentPostSerializer \
     , ImageSlideCommentPostSerializer, VideoCommentParamSerializer, ImageSlideCommentParamSerializer \
     , ImageSlideCommentPutSerializer, VideoCommentPutSerializer, PlaylistSerializer, PlaylistNameSerializer \
-    , PlaylistDetailSerializer, UserIDParamSerializer
+    , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer
 from core.models import User
 from utils.commons import ReadOnly
 
@@ -540,3 +540,71 @@ class PlaylistVideoAPIView(views.APIView):
             return Response({"result": 'error', 'message': f'You don\'t have the video {video.title} in the playlist {playlist.name}!'}, status=status.HTTP_400_BAD_REQUEST)
         playlist.videos.remove(video)
         return Response({"result": 'success', 'message': f'You removed the video {video.title} from the playlist {playlist.name}!'}, status=status.HTTP_200_OK)
+
+
+class PostAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page)
+        return page_obj
+
+    def get(self, request):
+        order_by = '-created_at'
+        if request.user.is_authenticated:
+            posts = Post.objects.filter(user=request.user).order_by(order_by)
+            page_obj = self.paginate_queryset(posts, CONTENT_PAGE_SIZE)
+            serializer = PostSerializer(page_obj, many=True)
+            return Response(serializer.data)
+        else:
+            query = UserIDParamSerializer(data=request.query_params)
+            if query.is_valid():
+                user_id = query.validated_data.get('user_id')
+                if user_id:
+                    user = get_object_or_404(User, pk=user_id)
+                    posts = Post.objects.filter(user=user).order_by(order_by)
+                    page_obj = self.paginate_queryset(posts, CONTENT_PAGE_SIZE)
+                    serializer = PostSerializer(page_obj, many=True)
+                    return Response(serializer.data)
+            return Response([])
+
+    def post(self, request):
+        try:
+            data = JSONParser().parse(request)
+            serializer = PostEditSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                serializer = PostDetailSerializer(serializer.instance)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class PostDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, post_id):
+        post = get_object_or_404(Post, pk=post_id)
+        serializer = PostDetailSerializer(post)
+        return Response(serializer.data)
+    
+    def put(self, request, post_id):
+        post = get_object_or_404(Post, pk=post_id, user=request.user)
+        try:
+            data = JSONParser().parse(request)
+            serializer = PostEditSerializer(post, data=data)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                serializer = PostDetailSerializer(serializer.instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, post_id):
+        post = get_object_or_404(Post, pk=post_id, user=request.user)
+        post.delete()
+        return Response({"result": 'success', 'message': f'You deleted the post!'}, status=status.HTTP_200_OK)

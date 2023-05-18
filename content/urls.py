@@ -26,4 +26,6 @@ urlpatterns = [
     path('playlists', views.PlaylistAPIView.as_view(), name='playlist_list'),
     path('playlists/<uuid:playlist_id>', views.PlaylistDetailAPIView.as_view(), name='playlist_detail'),
     path('playlists/<uuid:playlist_id>/<uuid:video_id>', views.PlaylistVideoAPIView.as_view(), name='playlist_video'),
+    path('posts', views.PostAPIView.as_view(), name='post_list'),
+    path('posts/<uuid:post_id>', views.PostDetailAPIView.as_view(), name='post_detail'),
 ]
