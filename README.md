@@ -11,13 +11,13 @@
     - [*] Avatar
     - [*] Header
     - [*] Description
+    - [*] Comments
   - [*] Following
   - [*] Followers
   - [*] Friends
   - [*] Posts
     - [*] Comments
   - [*] Playlists
-  - [ ] Comments
   - [ ] Messages
   - [ ] Notifications
   - [ ] Notifications settings
