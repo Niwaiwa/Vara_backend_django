@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, \
-    VideoComment, ImageSlideComment, Playlist, Post, PostComment
+    VideoComment, ImageSlideComment, Playlist, Post, PostComment, ProfileComment
 
 
 class UUIDField(serializers.Field):
@@ -268,4 +268,32 @@ class PostCommentPutSerializer(serializers.ModelSerializer):
 
 
 class PostCommentParamSerializer(serializers.Serializer):
+    parent = serializers.UUIDField(required=False)
+
+
+class ProfileCommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+    avatar = serializers.ImageField(source='user.avatar')
+    nickname = serializers.ReadOnlyField(source='user.nickname')
+
+    class Meta:
+        model = ProfileComment
+        fields = ('id', 'content', 'user_name', 'nickname', 'avatar', 'created_at', 'parent_comment_id')
+
+
+class ProfileCommentPostSerializer(serializers.ModelSerializer):
+    parent_comment_id = serializers.UUIDField(required=False)
+
+    class Meta:
+        model = ProfileComment
+        fields = ('content', 'parent_comment_id')
+
+
+class ProfileCommentPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileComment
+        fields = ('content',)
+
+
+class ProfileCommentParamSerializer(serializers.Serializer):
     parent = serializers.UUIDField(required=False)

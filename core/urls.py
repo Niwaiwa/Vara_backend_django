@@ -13,7 +13,6 @@ urlpatterns = [
     path('users/login', views.LoginView.as_view(), name='login'),
     path('users/logout', views.LogoutView.as_view(), name='logout'),
     path('users/user', views.UserView.as_view(), name='user_detail'),
-    path('users/profile/<str:username>', views.UserProfileView.as_view(), name='user_profile'),
     path('users/<str:user_id>/followers', views.UserFollowersView.as_view(), name='user_followers'),
     path('users/<str:user_id>/following', views.UserFollowingView.as_view(), name='user_following'),
     path('users/following', views.FollowingView.as_view(), name='following'),
@@ -22,4 +21,5 @@ urlpatterns = [
     path('users/<str:user_id>/friends/requests/accept', views.FriendRequestAcceptView.as_view(), name='friend_request_accept'),
     path('users/<str:user_id>/friends/requests/reject', views.FriendRequestRejectView.as_view(), name='friend_request_reject'),
     path('users/<str:user_id>/friends/requests/cancel', views.FriendRequestCancelView.as_view(), name='friend_request_cancel'),
+    path('profile/<str:username>', views.UserProfileView.as_view(), name='user_profile'),
 ]

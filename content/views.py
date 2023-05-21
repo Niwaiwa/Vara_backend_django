@@ -17,7 +17,8 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , ImageSlideCommentPostSerializer, VideoCommentParamSerializer, ImageSlideCommentParamSerializer \
     , ImageSlideCommentPutSerializer, VideoCommentPutSerializer, PlaylistSerializer, PlaylistNameSerializer \
     , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer \
-    , PostCommentSerializer, PostCommentPostSerializer, PostCommentPutSerializer, PostCommentParamSerializer
+    , PostCommentSerializer, PostCommentPostSerializer, PostCommentPutSerializer, PostCommentParamSerializer \
+    , ProfileCommentSerializer, ProfileCommentPostSerializer, ProfileCommentPutSerializer, ProfileCommentParamSerializer
 from core.models import User
 from utils.commons import ReadOnly
 
@@ -683,6 +684,85 @@ class PostCommentDetailAPIView(views.APIView):
             post_comment = post.comments.filter(user=request.user, pk=comment_id).first()
             if post_comment:
                 post_comment.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileCommentListCreateAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, pk=user_id)
+        profile_comments = user.profile_comments.filter(parent_comment=None).order_by('created_at')
+
+        query = ProfileCommentParamSerializer(data=request.query_params)
+        if query.is_valid():
+            parent_comment_id = query.validated_data.get('parent')
+            if parent_comment_id:
+                profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
+                if profile_comment:
+                    profile_comments = user.profile_comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(profile_comments, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = ProfileCommentSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, user_id):
+        try:
+            user = get_object_or_404(User, pk=user_id)
+            data = JSONParser().parse(request)
+            serializer = ProfileCommentPostSerializer(data=data)
+            if serializer.is_valid():
+                parent_comment_id = serializer.validated_data.get('parent_comment_id')
+                if parent_comment_id:
+                    profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
+                    if profile_comment:
+                        serializer.save(profile=user, user=request.user, parent_comment=profile_comment)   
+                        response_serializer = ProfileCommentSerializer(serializer.instance)
+                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    serializer.save(profile=user, user=request.user)
+                    response_serializer = ProfileCommentSerializer(serializer.instance)
+                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileCommentDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def put(self, request, user_id, comment_id):
+        try:
+            user = get_object_or_404(User, pk=user_id)
+            data = JSONParser().parse(request)
+            serializer = ProfileCommentPutSerializer(data=data)
+            if serializer.is_valid():
+                profile_comment = user.profile_comments.filter(user=request.user, pk=comment_id).first()
+                if profile_comment:
+                    profile_comment.content = serializer.validated_data.get('content')
+                    profile_comment.save()
+                    response_serializer = ProfileCommentSerializer(profile_comment)
+                    return Response(response_serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, user_id, comment_id):
+        try:
+            user = get_object_or_404(User, pk=user_id)
+            profile_comment = user.profile_comments.filter(user=request.user, pk=comment_id).first()
+            if profile_comment:
+                profile_comment.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)

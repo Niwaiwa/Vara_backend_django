@@ -30,4 +30,6 @@ urlpatterns = [
     path('posts/<uuid:post_id>', views.PostDetailAPIView.as_view(), name='post_detail'),
     path('posts/<uuid:post_id>/comments', views.PostCommentListCreateAPIView.as_view(), name='post_comment_list'),
     path('posts/<uuid:post_id>/comments/<uuid:comment_id>', views.PostCommentDetailAPIView.as_view(), name='post_comment_detail'),
+    path('profile/<uuid:user_id>/comments', views.ProfileCommentListCreateAPIView.as_view(), name='profile_comment_list'),
+    path('profile/<uuid:user_id>/comments/<uuid:comment_id>', views.ProfileCommentDetailAPIView.as_view(), name='profile_comment_detail'),
 ]
