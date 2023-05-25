@@ -109,3 +109,17 @@ class FriendRequest(models.Model):
             models.UniqueConstraint(
                 fields=['from_user', 'to_user'], name='unique_friend_request')
         ]
+
+class MessageThread(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_messages')
+    title = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Message(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    thread = models.ForeignKey('MessageThread', on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='messages')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
