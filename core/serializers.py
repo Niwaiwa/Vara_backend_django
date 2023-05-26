@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Following, Followers, Friends, FriendRequest
+from .models import Following, Followers, Friends, FriendRequest, MessageThread, Message
 from content.serializers import VideoSerializer
 
 
@@ -85,3 +85,24 @@ class FriendRequestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendRequest
         fields = ('id', 'user_name', 'nickname', 'avatar', 'created_at', 'updated_at')
+
+class MessageThreadListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MessageThread
+        fields = ('id', 'sender', 'recipient', 'created_at')
+
+class MessageThreadPostSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=True, allow_blank=False, max_length=1000)
+    class Meta:
+        model = MessageThread
+        fields = ('recipient', 'title', 'content')
+
+class MessageListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ('id', 'thread', 'sender', 'content', 'created_at')
+
+class MessagePostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ('content',)

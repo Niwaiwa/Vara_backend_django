@@ -1,16 +1,21 @@
 from json import JSONDecodeError
 from django.http import JsonResponse
+from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from rest_framework import views, status
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
-from .models import User, Following, Followers, Friends, FriendRequest
+
+from .models import User, Following, Followers, Friends, FriendRequest, MessageThread, Message
 from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
-    FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer
+    FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer, \
+    MessageThreadListSerializer, MessageThreadPostSerializer, MessageListSerializer, MessagePostSerializer
 from utils.commons import ReadOnly
 
 
@@ -258,3 +263,77 @@ class FriendRequestCancelView(views.APIView):
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
+class MessageThreadView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        message_threads = MessageThread.objects.filter(Q(sender=user) | Q(recipient=user)).order_by('-created_at')
+        page = request.GET.get('page', 1)
+        paginator = Paginator(message_threads, CONTENT_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = MessageThreadListSerializer(page_obj, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        try:
+            data = JSONParser().parse(request)
+            serializer = MessageThreadPostSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                user = request.user
+                recipient = serializer.validated_data.get('recipient')
+                title = serializer.validated_data.get('title')
+                content = serializer.validated_data.get('content')
+
+                message_thread = MessageThread.objects.create(sender=user, recipient=recipient, title=title)
+                message = Message.objects.create(thread=message_thread, sender=user, content=content)
+                return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class MessageThreadDetailView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, message_thread_id):
+        message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
+        message_thread.delete()
+        return Response({"result": 'success', 'message': 'Message thread deleted!'}, status=status.HTTP_200_OK)
+    
+class MessageThreadMessageView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, message_thread_id):
+        message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
+        messages = Message.objects.filter(thread=message_thread).order_by('created_at')
+        page = request.GET.get('page', 1)
+        paginator = Paginator(messages, CONTENT_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = MessageListSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, message_thread_id):
+        try:
+            data = JSONParser().parse(request)
+            serializer = MessagePostSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                user = request.user
+                message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
+                content = serializer.validated_data.get('content')
+
+                message = Message.objects.create(thread=message_thread, sender=user, content=content)
+                return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class MessageThreadMessageDetailView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, message_thread_id, message_id):
+        message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
+        message = get_object_or_404(Message, pk=message_id, thread=message_thread)
+        message.delete()
+        return Response({"result": 'success', 'message': 'Messages deleted!'}, status=status.HTTP_200_OK)
