@@ -18,7 +18,7 @@
   - [*] Posts
     - [*] Comments
   - [*] Playlists
-  - [ ] Messages
+  - [*] Messages
   - [ ] Notifications
   - [ ] Notifications settings
   - [ ] Blacklist tags
