@@ -123,3 +123,20 @@ class Message(models.Model):
     sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='messages')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Notification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=100)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class NotificationSettings(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='notification_settings')
+    mension_enabled = models.BooleanField(default=True)
+    comment_enabled = models.BooleanField(default=True)
+    reply_enabled = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
