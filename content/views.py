@@ -19,7 +19,7 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer \
     , PostCommentSerializer, PostCommentPostSerializer, PostCommentPutSerializer, PostCommentParamSerializer \
     , ProfileCommentSerializer, ProfileCommentPostSerializer, ProfileCommentPutSerializer, ProfileCommentParamSerializer
-from core.models import User
+from core.models import User, Notification
 from utils.commons import ReadOnly
 
 sort_map = {
@@ -335,13 +335,19 @@ class VideoCommentListCreateAPIView(views.APIView):
                 if parent_comment_id:
                     video_comment = video.comments.filter(pk=parent_comment_id).first()
                     if video_comment:
-                        serializer.save(video=video, user=request.user, parent_comment=video_comment)   
+                        serializer.save(video=video, user=request.user, parent_comment=video_comment)
+                        if video.user != request.user:
+                            notification = Notification.objects.create(
+                                user=video.user, message=f'{request.user.nickname} replied to your comment', url=f'/video/{video.id}')
                         response_serializer = VideoCommentSerializer(serializer.instance)
                         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
                     else:
                         return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(video=video, user=request.user)
+                    if video.user != request.user:
+                        notification = Notification.objects.create(
+                            user=video.user, message=f'{request.user.nickname} commented on your video', url=f'/video/{video.id}')
                     response_serializer = VideoCommentSerializer(serializer.instance)
                     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -414,13 +420,19 @@ class ImageSlideCommentListCreateAPIView(views.APIView):
                 if parent_comment_id:
                     image_comment = slide.comments.filter(pk=parent_comment_id).first()
                     if image_comment:
-                        serializer.save(slide=slide, user=request.user, parent_comment=image_comment)   
+                        serializer.save(slide=slide, user=request.user, parent_comment=image_comment)
+                        if slide.user != request.user:
+                            notification = Notification.objects.create(
+                                user=slide.user, message=f'{request.user.nickname} replied to your comment', url=f'/images/{slide.id}')
                         response_serializer = ImageSlideCommentSerializer(serializer.instance)
                         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
                     else:
                         return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(slide=slide, user=request.user)
+                    if slide.user != request.user:
+                        notification = Notification.objects.create(
+                            user=slide.user, message=f'{request.user.nickname} commented on your images', url=f'/images/{slide.id}')
                     response_serializer = ImageSlideCommentSerializer(serializer.instance)
                     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -643,13 +655,19 @@ class PostCommentListCreateAPIView(views.APIView):
                 if parent_comment_id:
                     post_comment = post.comments.filter(pk=parent_comment_id).first()
                     if post_comment:
-                        serializer.save(post=post, user=request.user, parent_comment=post_comment)   
+                        serializer.save(post=post, user=request.user, parent_comment=post_comment)
+                        if post.user != request.user:
+                            notification = Notification.objects.create(
+                                user=post.user, message=f'{request.user.nickname} replied to your comment', url=f'/post/{post.id}')
                         response_serializer = PostCommentSerializer(serializer.instance)
                         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
                     else:
                         return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(post=post, user=request.user)
+                    if post.user != request.user:
+                        notification = Notification.objects.create(
+                            user=post.user, message=f'{request.user.nickname} commented on your post', url=f'/post/{post.id}')
                     response_serializer = PostCommentSerializer(serializer.instance)
                     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -722,13 +740,19 @@ class ProfileCommentListCreateAPIView(views.APIView):
                 if parent_comment_id:
                     profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
                     if profile_comment:
-                        serializer.save(profile=user, user=request.user, parent_comment=profile_comment)   
+                        serializer.save(profile=user, user=request.user, parent_comment=profile_comment)
+                        if user != request.user:
+                            notification = Notification.objects.create(
+                                user=user, message=f'{request.user.nickname} replied to your comment', url=f'/profile/{user.username}')
                         response_serializer = ProfileCommentSerializer(serializer.instance)
                         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
                     else:
                         return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(profile=user, user=request.user)
+                    if user != request.user:
+                        notification = Notification.objects.create(
+                            user=user, message=f'{request.user.nickname} commented on your profile', url=f'/profile/{user.username}')
                     response_serializer = ProfileCommentSerializer(serializer.instance)
                     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
