@@ -26,4 +26,6 @@ urlpatterns = [
     path('message_threads/<uuid:message_thread_id>', views.MessageThreadDetailView.as_view(), name='message_thread_detail'),     
     path('message_threads/<uuid:message_thread_id>/messages', views.MessageThreadMessageView.as_view(), name='messages'),
     path('message_threads/<uuid:message_thread_id>/messages/<uuid:message_id>', views.MessageThreadMessageDetailView.as_view(), name='message_detail'),
+    path('notifications', views.NotificationView.as_view(), name='notifications'),
+    path('notifications/<uuid:notification_id>', views.NotificationDetailView.as_view(), name='notification_detail'),
 ]

@@ -12,10 +12,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
 
-from .models import User, Following, Followers, Friends, FriendRequest, MessageThread, Message
+from .models import User, Following, Followers, Friends, FriendRequest, MessageThread, Message, Notification, \
+    NotificationSettings
 from .serializers import UserSignupSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer, \
     FollowingListSerializer, FollowersListSerializer, FriendsListSerializer, FriendRequestListSerializer, \
-    MessageThreadListSerializer, MessageThreadPostSerializer, MessageListSerializer, MessagePostSerializer
+    MessageThreadListSerializer, MessageThreadPostSerializer, MessageListSerializer, MessagePostSerializer, \
+    NotificationSerializer, NotificationPutSerializer, NotificationPostSerializer
 from utils.commons import ReadOnly
 
 
@@ -337,3 +339,44 @@ class MessageThreadMessageDetailView(views.APIView):
         message = get_object_or_404(Message, pk=message_id, thread=message_thread)
         message.delete()
         return Response({"result": 'success', 'message': 'Messages deleted!'}, status=status.HTTP_200_OK)
+    
+class NotificationView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        notifications = Notification.objects.filter(user=user).order_by('-created_at')
+        page = request.GET.get('page', 1)
+        paginator = Paginator(notifications, SMALL_PAGE_SIZE)
+        page_obj = paginator.get_page(page)
+        serializer = NotificationSerializer(page_obj, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        try:
+            data = JSONParser().parse(request)
+            serializer = NotificationPostSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                user_id = serializer.validated_data.get('user_id')
+                user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
+                message = serializer.validated_data.get('message')
+
+                notification = Notification.objects.create(user=user, message=message)
+                return Response({"result": 'success', 'message': 'Notification sent!'}, status=status.HTTP_200_OK)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+class NotificationDetailView(views.APIView):
+
+    def put(self, request, notification_id):
+        notification = get_object_or_404(Notification, pk=notification_id)
+        data = {'is_read': True}
+        serializer = NotificationPutSerializer(notification, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        

@@ -1,10 +1,18 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Following, Followers, Friends, FriendRequest, MessageThread, Message
+from .models import Following, Followers, Friends, FriendRequest, MessageThread, Message \
+    , Notification, NotificationSettings
 from content.serializers import VideoSerializer
 
 
 User = get_user_model()
+
+class NotificationSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationSettings
+        fields = ('mension_enabled', 'comment_enabled', 'reply_enabled')
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at')
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -106,3 +114,21 @@ class MessagePostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ('content',)
+
+class NotificationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        fields = ('id', 'user', 'message', 'url', 'is_read',  'created_at', 'updated_at')
+
+class NotificationPostSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+
+    class Meta:
+        model = Notification
+        fields = ('user_id', 'message', 'url')
+
+class NotificationPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ('is_read',)
