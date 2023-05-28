@@ -20,9 +20,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'nickname', 'avatar', 'header', 'description')
 
 class UserSerializer(serializers.ModelSerializer):
+    notifications = NotificationSettingsSerializer(source='notification_settings', read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'nickname', 'avatar', 'header', 'description', 'locale')
+        fields = ('id', 'username', 'email', 'nickname', 'avatar', 'header', 'description', 'locale', 'notifications')
         read_only_fields = ('username',)
 
 class UserSignupSerializer(serializers.ModelSerializer):

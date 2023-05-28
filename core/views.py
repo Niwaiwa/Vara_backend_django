@@ -29,6 +29,7 @@ class SignupView(views.APIView):
             serializer = UserSignupSerializer(data=data)
             if serializer.is_valid():
                 user = serializer.save()
+                notification_settings = NotificationSettings.objects.create(user=user)
                 return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -77,6 +78,9 @@ class UserView(views.APIView):
     parser_classes = [MultiPartParser]
 
     def get(self, request):
+        notification_settings = NotificationSettings.objects.filter(user=request.user).first()
+        if not notification_settings:
+            notification_settings = NotificationSettings.objects.create(user=request.user)
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
     
     def put(self, request):
