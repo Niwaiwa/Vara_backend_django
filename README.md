@@ -19,8 +19,8 @@
     - [*] Comments
   - [*] Playlists
   - [*] Messages
-  - [ ] Notifications
-  - [ ] Notifications settings
+  - [*] Notifications
+  - [*] Notifications settings
   - [ ] Blacklist tags
   - [ ] Polls
 - [*] Videos
