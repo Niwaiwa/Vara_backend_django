@@ -193,3 +193,36 @@ class ProfileComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent_comment = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='replies', null=True, blank=True)
+
+
+class Forum(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    is_admin = models.BooleanField(default=False)
+    threads_count = models.PositiveIntegerField(default=0)
+    posts_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ForumThread(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    forum = models.ForeignKey(Forum, related_name='forum_threads', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='user_forum_threads', on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    views_count = models.PositiveIntegerField(default=0)
+    posts_count = models.PositiveIntegerField(default=0)
+    is_sticky = models.BooleanField(default=False)
+    is_locked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ForumPost(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    thread = models.ForeignKey(ForumThread, related_name='thread_posts', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='user_forum_posts', on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
