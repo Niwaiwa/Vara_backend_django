@@ -197,6 +197,7 @@ class ProfileComment(models.Model):
 
 class Forum(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category = models.CharField(max_length=100)
     title = models.CharField(max_length=100)
     description = models.TextField()
     is_admin = models.BooleanField(default=False)
