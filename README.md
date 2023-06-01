@@ -42,9 +42,9 @@
     - [ ] Large image thumbnail
     - [ ] Original images
 - [*] Tags
-- [ ] Forums
-  - [ ] Threads
-    - [ ] Posts
+- [*] Forums
+  - [*] Threads
+    - [*] Posts
 - [ ] Languages
   - [ ] English
   - [ ] Japanese
