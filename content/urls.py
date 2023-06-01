@@ -32,4 +32,10 @@ urlpatterns = [
     path('posts/<uuid:post_id>/comments/<uuid:comment_id>', views.PostCommentDetailAPIView.as_view(), name='post_comment_detail'),
     path('profile/<uuid:user_id>/comments', views.ProfileCommentListCreateAPIView.as_view(), name='profile_comment_list'),
     path('profile/<uuid:user_id>/comments/<uuid:comment_id>', views.ProfileCommentDetailAPIView.as_view(), name='profile_comment_detail'),
+    path('forum', views.ForumAPIView.as_view(), name='forum_list'),
+    path('forum/<uuid:forum_id>', views.ForumDetailAPIView.as_view(), name='forum_detail'),
+    path('forum/<uuid:forum_id>/threads', views.ForumThreadAPIView.as_view(), name='forum_thread_list'),
+    path('forum/<uuid:forum_id>/threads/<uuid:thread_id>', views.ForumThreadDetailAPIView.as_view(), name='forum_thread_detail'),
+    path('forum/<uuid:forum_id>/threads/<uuid:thread_id>/posts', views.ForumPostAPIView.as_view(), name='forum_thread_post_list'),
+    path('forum/<uuid:forum_id>/threads/<uuid:thread_id>/posts/<uuid:post_id>', views.ForumPostDetailAPIView.as_view(), name='forum_thread_post_detail'),
 ]

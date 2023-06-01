@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, \
-    VideoComment, ImageSlideComment, Playlist, Post, PostComment, ProfileComment
+    VideoComment, ImageSlideComment, Playlist, Post, PostComment, ProfileComment, \
+    Forum, ForumThread, ForumPost
 
 
 class UUIDField(serializers.Field):
@@ -297,3 +298,52 @@ class ProfileCommentPutSerializer(serializers.ModelSerializer):
 
 class ProfileCommentParamSerializer(serializers.Serializer):
     parent = serializers.UUIDField(required=False)
+
+
+class ForumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Forum
+        fields = '__all__'
+
+
+class ForumPostMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Forum
+        fields = ('category', 'title', 'description', 'is_admin')
+
+
+class ForumThreadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForumThread
+        fields = '__all__'
+
+
+class ForumPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForumPost
+        fields = '__all__'
+
+
+class ForumPostPostSerializer(serializers.ModelSerializer):   
+    class Meta:
+        model = ForumPost
+        fields = ('content',)
+
+
+class ForumPostPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForumPost
+        fields = ('content',)
+
+
+class ForumThreadPostSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=True)
+    class Meta:
+        model = ForumThread
+        fields = ('title', 'is_sticky', 'is_locked', 'content')
+
+
+class ForumThreadPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ForumThread
+        fields = ('title', 'is_sticky', 'is_locked')

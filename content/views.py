@@ -9,7 +9,8 @@ from rest_framework import views, status
 from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
 
-from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist, Post, PostComment
+from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist, Post, PostComment \
+    , Forum, ForumThread, ForumPost
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
     , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer \
@@ -18,7 +19,9 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , ImageSlideCommentPutSerializer, VideoCommentPutSerializer, PlaylistSerializer, PlaylistNameSerializer \
     , PlaylistDetailSerializer, UserIDParamSerializer, PostSerializer, PostEditSerializer, PostDetailSerializer \
     , PostCommentSerializer, PostCommentPostSerializer, PostCommentPutSerializer, PostCommentParamSerializer \
-    , ProfileCommentSerializer, ProfileCommentPostSerializer, ProfileCommentPutSerializer, ProfileCommentParamSerializer
+    , ProfileCommentSerializer, ProfileCommentPostSerializer, ProfileCommentPutSerializer, ProfileCommentParamSerializer \
+    , ForumSerializer, ForumPostMethodSerializer, ForumThreadSerializer, ForumThreadPostSerializer \
+    , ForumPostSerializer, ForumPostPostSerializer, ForumThreadPutSerializer, ForumPostPutSerializer
 from core.models import User, Notification
 from utils.commons import ReadOnly
 
@@ -792,3 +795,191 @@ class ProfileCommentDetailAPIView(views.APIView):
                 return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ForumAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def get(self, request):
+        forums = Forum.objects.filter().order_by('category', 'title')
+        serializer = ForumSerializer(forums, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        try:
+            if request.user != User.objects.get(is_superuser=True):
+                return Response({"result": 'error', 'message': 'You are not admin'}, status=status.HTTP_400_BAD_REQUEST)
+
+            data = JSONParser().parse(request)
+            serializer = ForumPostMethodSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ForumDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, forum_id):
+        if request.user != User.objects.get(is_superuser=True):
+            return Response({"result": 'error', 'message': 'You are not admin'}, status=status.HTTP_400_BAD_REQUEST)
+
+        forum = get_object_or_404(Forum, pk=forum_id)
+        forum.delete()
+        return Response({"result": 'success', 'message': f'You deleted the forum!'}, status=status.HTTP_200_OK)
+    
+
+class ForumThreadAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def pageinate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page)
+        return page_obj
+
+    def get(self, request, forum_id):
+        forum = get_object_or_404(Forum, pk=forum_id)
+        threads = forum.forum_threads.filter().order_by('-created_at')
+        page_obj = self.pageinate_queryset(threads, CONTENT_PAGE_SIZE)
+        serializer = ForumThreadSerializer(page_obj, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, forum_id):
+        try:
+            forum = get_object_or_404(Forum, pk=forum_id)
+            data = JSONParser().parse(request)
+            thread_serializer = ForumThreadPostSerializer(data=data)
+            if thread_serializer.is_valid():
+                thread_validate_data = thread_serializer.validated_data
+                content = thread_validate_data.pop('content', None)
+                thread = ForumThread.objects.create(user=request.user, forum=forum, **thread_validate_data)
+                post = ForumPost.objects.create(user=request.user, thread=thread, content=content)
+
+                forum.increment_threads_count()
+                forum.increment_posts_count()
+                thread.increment_posts_count()
+                thread_serializer = ForumThreadSerializer(thread)
+                return Response(thread_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"result": 'error', 'message': thread_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ForumThreadDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def put(self, request, forum_id, thread_id):
+        try:
+            forum = get_object_or_404(Forum, pk=forum_id)
+            data = JSONParser().parse(request)
+            if request.user == User.objects.get(is_superuser=True):
+                thread = get_object_or_404(ForumThread, pk=thread_id)
+                serializer = ForumThreadPutSerializer(thread, data=data)
+            else:
+                thread = get_object_or_404(ForumThread, pk=thread_id, user=request.user)
+                user_data = {
+                    'title': data.get('title'),
+                    'description': data.get('description'),
+                }
+                serializer = ForumThreadPutSerializer(thread, data=user_data)
+
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                serializer = ForumThreadSerializer(serializer.instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, forum_id, thread_id):
+        forum = get_object_or_404(Forum, pk=forum_id)
+        if request.user == User.objects.get(is_superuser=True):
+            thread = get_object_or_404(ForumThread, pk=thread_id)
+        else:
+            thread = get_object_or_404(ForumThread, pk=thread_id, user=request.user)
+        forum.decrement_threads_count()
+        forum.posts_count -= thread.posts_count
+        forum.save()
+        thread.delete()
+        return Response({"result": 'success', 'message': f'You deleted the thread!'}, status=status.HTTP_200_OK)
+    
+
+class ForumPostAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def pageinate_queryset(self, queryset, page_size):
+        paginator = Paginator(queryset, page_size)
+        page = self.request.GET.get('page', 1)
+        page_obj = paginator.get_page(page)
+        return page_obj
+
+    def get(self, request, forum_id, thread_id):
+        forum = get_object_or_404(Forum, pk=forum_id)
+        thread = get_object_or_404(ForumThread, pk=thread_id)
+        posts = thread.thread_posts.filter().order_by('created_at')
+        page_obj = self.pageinate_queryset(posts, SMALL_PAGE_SIZE)
+        data = {
+            'thread': ForumThreadSerializer(thread).data,
+            'posts': ForumPostSerializer(page_obj, many=True).data,
+        }
+        thread.increment_views_count()
+        return Response(data)
+
+    def post(self, request, forum_id, thread_id):
+        try:
+            forum = get_object_or_404(Forum, pk=forum_id)
+            thread = get_object_or_404(ForumThread, pk=thread_id)
+            data = JSONParser().parse(request)
+            serializer = ForumPostPostSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save(user=request.user, thread=thread)
+                forum.increment_posts_count()
+                thread.increment_posts_count()
+                serializer = ForumPostSerializer(serializer.instance)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ForumPostDetailAPIView(views.APIView):
+    permission_classes = [IsAuthenticated | ReadOnly]
+
+    def put(self, request, forum_id, thread_id, post_id):
+        try:
+            forum = get_object_or_404(Forum, pk=forum_id)
+            thread = get_object_or_404(ForumThread, pk=thread_id)
+            data = JSONParser().parse(request)
+            if request.user == User.objects.get(is_superuser=True):
+                post = get_object_or_404(ForumPost, pk=post_id)
+                serializer = ForumPostPutSerializer(post, data=data)
+            else:
+                post = get_object_or_404(ForumPost, pk=post_id, user=request.user)
+                user_data = {
+                    'content': data.get('content'),
+                }
+                serializer = ForumPostPutSerializer(post, data=user_data)
+
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                serializer = ForumPostSerializer(serializer.instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except JSONDecodeError:
+            return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, forum_id, thread_id, post_id):
+        forum = get_object_or_404(Forum, pk=forum_id)
+        thread = get_object_or_404(ForumThread, pk=thread_id)
+        if request.user == User.objects.get(is_superuser=True):
+            post = get_object_or_404(ForumPost, pk=post_id)
+        else:
+            post = get_object_or_404(ForumPost, pk=post_id, user=request.user)
+        post.delete()
+        forum.decrement_posts_count()
+        thread.decrement_posts_count()
+        return Response({"result": 'success', 'message': f'You deleted the post!'}, status=status.HTTP_200_OK)
