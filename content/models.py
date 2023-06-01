@@ -206,6 +206,22 @@ class Forum(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def increment_threads_count(self):
+        self.threads_count += 1
+        self.save(update_fields=['threads_count'])
+
+    def increment_posts_count(self):
+        self.posts_count += 1
+        self.save(update_fields=['posts_count'])
+
+    def decrement_threads_count(self):
+        self.threads_count -= 1
+        self.save(update_fields=['threads_count'])
+
+    def decrement_posts_count(self):
+        self.posts_count -= 1
+        self.save(update_fields=['posts_count'])
+
 
 class ForumThread(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -218,6 +234,18 @@ class ForumThread(models.Model):
     is_locked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def increment_views_count(self):
+        self.views_count += 1
+        self.save(update_fields=['views_count'])
+
+    def increment_posts_count(self):
+        self.posts_count += 1
+        self.save(update_fields=['posts_count'])
+
+    def decrement_posts_count(self):
+        self.posts_count -= 1
+        self.save(update_fields=['posts_count'])
 
 
 class ForumPost(models.Model):
