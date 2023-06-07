@@ -43,18 +43,17 @@ class CommentRepository(BaseRepository):
             return None
 
     def create(self, data: Dict[str, Any]) -> Optional[CommentEntity]:
-        model = self.model_class(**data)
+        model = self.model_class.objects.create(**data)
         model.save()
         return self._get_comment_entity(model)
 
     def update_one(self, data: Dict[str, Any]) -> Optional[CommentEntity]:
-        model = self.model_class(**data)
+        model = self.model_class.objects.update(**data)
         model.save()
         return self._get_comment_entity(model)
 
     def delete(self, id: str) -> None:
-        model = self.model_class.objects.get(id=id)
-        model.delete()
+        model = self.model_class.objects.delete(id=id)
 
     def _get_comment_entity(self, model: models.Model) -> CommentEntity:
         return CommentEntity(
