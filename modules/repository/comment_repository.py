@@ -2,7 +2,7 @@ from .base_repository import BaseRepository
 from typing import Any, Dict, List
 from django.db import models
 from modules.entities.comment import CommentEntity
-from typing import Optional
+from typing import Optional, Union
 
 class CommentRepository(BaseRepository):
     relation_property_map = {
@@ -22,8 +22,8 @@ class CommentRepository(BaseRepository):
             return None
         return self._get_comment_entity(comment)
     
-    def filter(self, **kwargs) -> Optional[CommentEntity]:
-        comments = self.model_class.objects.filter(**kwargs)
+    def filter(self, order: str = 'created_at', **filter_kwargs) -> Optional[List[Optional[CommentEntity]]]:
+        comments = self.model_class.objects.filter(**filter_kwargs).order_by(order)
         if len(comments) > 1:
             return self._get_multi_comment_entity(comments)
         elif len(comments) == 1:
@@ -32,8 +32,8 @@ class CommentRepository(BaseRepository):
         else:
             return None
 
-    def all(self) -> List[Optional[CommentEntity]]:
-        comments = self.model_class.objects.all()
+    def all(self, order: str = 'created_at') -> Optional[List[Optional[CommentEntity]]]:
+        comments = self.model_class.objects.all().order_by(order)
         if len(comments) > 1:
             return self._get_multi_comment_entity(comments)
         elif len(comments) == 1:
