@@ -1,6 +1,7 @@
 from .base_repository import BaseRepository
 from typing import Any, Dict, List
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 from modules.entities.post import PostEntity
 from typing import Optional, Union
 
@@ -10,9 +11,11 @@ class PostRepository(BaseRepository):
         self.model_class = model_class
 
     def get(self, id: str) -> Optional[PostEntity]:
-        post = self.model_class.objects.filter(id=id).first()
-        if post is None:
+        try:
+            post = self.model_class.objects.filter(id=id).first()
+        except ObjectDoesNotExist:
             return None
+
         return self._get_entity_item(post)
     
     def filter(self, order: str = '-created_at', **filter_kwargs) -> Optional[List[Optional[PostEntity]]]:

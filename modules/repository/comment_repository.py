@@ -1,6 +1,7 @@
 from .base_repository import BaseRepository
 from typing import Any, Dict, List
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 from modules.entities.comment import CommentEntity
 from typing import Optional, Union
 
@@ -17,9 +18,11 @@ class CommentRepository(BaseRepository):
         self.relation_property = self.relation_property_map[model_class.__name__.lower()]
 
     def get(self, id: str) -> Optional[CommentEntity]:
-        model = self.model_class.objects.filter(id=id).first()
-        if model is None:
+        try:
+            model = self.model_class.objects.filter(id=id).first()
+        except ObjectDoesNotExist:
             return None
+
         return self._get_entity_item(model)
     
     def filter(self, order: str = 'created_at', **filter_kwargs) -> Optional[List[Optional[CommentEntity]]]:
