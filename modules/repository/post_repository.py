@@ -18,19 +18,13 @@ class PostRepository(BaseRepository):
 
         return self._get_entity_item(post)
     
-    def filter(self, order: str = '-created_at', **filter_kwargs) -> Optional[List[Optional[PostEntity]]]:
+    def filter(self, order: str = '-created_at', **filter_kwargs) -> List[Optional[PostEntity]]:
         posts = self.model_class.objects.filter(**filter_kwargs).order_by(order)
-        if len(posts) > 0:
-            return self._get_entity_items(posts)
-        else:
-            return None
+        return self._get_entity_items(posts)
 
-    def all(self, order: str = '-created_at') -> Optional[List[Optional[PostEntity]]]:
+    def all(self, order: str = '-created_at') -> List[Optional[PostEntity]]:
         posts = self.model_class.objects.all().order_by(order)
-        if len(posts) > 0:
-            return self._get_entity_items(posts)
-        else:
-            return None
+        return self._get_entity_items(posts)
 
     def create(self, data: Dict[str, Any]) -> Optional[PostEntity]:
         model = self.model_class.objects.create(**data)

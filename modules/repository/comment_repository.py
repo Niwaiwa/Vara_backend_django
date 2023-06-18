@@ -25,19 +25,13 @@ class CommentRepository(BaseRepository):
 
         return self._get_entity_item(model)
     
-    def filter(self, order: str = 'created_at', **filter_kwargs) -> Optional[List[Optional[CommentEntity]]]:
+    def filter(self, order: str = 'created_at', **filter_kwargs) -> List[Optional[CommentEntity]]:
         models = self.model_class.objects.filter(**filter_kwargs).order_by(order)
-        if len(models) > 0:
-            return self._get_entity_items(models)
-        else:
-            return None
+        return self._get_entity_items(models)
 
-    def all(self, order: str = 'created_at') -> Optional[List[Optional[CommentEntity]]]:
+    def all(self, order: str = 'created_at') -> List[Optional[CommentEntity]]:
         models = self.model_class.objects.all().order_by(order)
-        if len(models) > 0:
-            return self._get_entity_items(models)
-        else:
-            return None
+        return self._get_entity_items(models)
 
     def create(self, data: Dict[str, Any]) -> Optional[CommentEntity]:
         model = self.model_class.objects.create(**data)
