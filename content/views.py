@@ -638,9 +638,8 @@ class PostCommentListCreateAPIView(views.APIView):
 
         if parent_comment_id:
             post = get_object_or_404(Post, pk=post_id)
-            post_comment = post.comments.filter(pk=parent_comment_id).first()
-            if post_comment:
-                post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+            post_comment = get_object_or_404(PostComment, pk=parent_comment_id, post=post)
+            post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
         else:
             post = get_object_or_404(Post, pk=post_id)
             post_comments = post.comments.filter(parent_comment=None).order_by('created_at')
