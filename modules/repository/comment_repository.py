@@ -17,28 +17,22 @@ class CommentRepository(BaseRepository):
         self.relation_property = self.relation_property_map[model_class.__name__.lower()]
 
     def get(self, id: str) -> Optional[CommentEntity]:
-        comment = self.model_class.objects.filter(id=id).first()
-        if comment is None:
+        model = self.model_class.objects.filter(id=id).first()
+        if model is None:
             return None
-        return self._get_entity_item(comment)
+        return self._get_entity_item(model)
     
     def filter(self, order: str = 'created_at', **filter_kwargs) -> Optional[List[Optional[CommentEntity]]]:
-        comments = self.model_class.objects.filter(**filter_kwargs).order_by(order)
-        if len(comments) > 1:
-            return self._get_multi_comment_entity(comments)
-        elif len(comments) == 1:
-            comment = comments[0]
-            return self._get_entity_item(comment)
+        models = self.model_class.objects.filter(**filter_kwargs).order_by(order)
+        if len(models) > 0:
+            return self._get_entity_items(models)
         else:
             return None
 
     def all(self, order: str = 'created_at') -> Optional[List[Optional[CommentEntity]]]:
-        comments = self.model_class.objects.all().order_by(order)
-        if len(comments) > 1:
-            return self._get_multi_comment_entity(comments)
-        elif len(comments) == 1:
-            comment = comments[0]
-            return self._get_entity_item(comment)
+        models = self.model_class.objects.all().order_by(order)
+        if len(models) > 0:
+            return self._get_entity_items(models)
         else:
             return None
 
@@ -65,5 +59,5 @@ class CommentRepository(BaseRepository):
             updated_at=model.updated_at,
             parent_comment=model.parent_comment)
     
-    def _get_multi_comment_entity(self, models: List[models.Model]) -> List[Optional[CommentEntity]]:
+    def _get_entity_items(self, models: List[models.Model]) -> List[Optional[CommentEntity]]:
         return [self._get_entity_item(model) for model in models]
