@@ -20,7 +20,7 @@ class CommentRepository(BaseRepository):
         comment = self.model_class.objects.filter(id=id).first()
         if comment is None:
             return None
-        return self._get_comment_entity(comment)
+        return self._get_entity_item(comment)
     
     def filter(self, order: str = 'created_at', **filter_kwargs) -> Optional[List[Optional[CommentEntity]]]:
         comments = self.model_class.objects.filter(**filter_kwargs).order_by(order)
@@ -28,7 +28,7 @@ class CommentRepository(BaseRepository):
             return self._get_multi_comment_entity(comments)
         elif len(comments) == 1:
             comment = comments[0]
-            return self._get_comment_entity(comment)
+            return self._get_entity_item(comment)
         else:
             return None
 
@@ -38,24 +38,24 @@ class CommentRepository(BaseRepository):
             return self._get_multi_comment_entity(comments)
         elif len(comments) == 1:
             comment = comments[0]
-            return self._get_comment_entity(comment)
+            return self._get_entity_item(comment)
         else:
             return None
 
     def create(self, data: Dict[str, Any]) -> Optional[CommentEntity]:
         model = self.model_class.objects.create(**data)
         model.save()
-        return self._get_comment_entity(model)
+        return self._get_entity_item(model)
 
     def update_one(self, data: Dict[str, Any]) -> Optional[CommentEntity]:
         model = self.model_class.objects.update(**data)
         model.save()
-        return self._get_comment_entity(model)
+        return self._get_entity_item(model)
 
     def delete(self, id: str) -> None:
         model = self.model_class.objects.delete(id=id)
 
-    def _get_comment_entity(self, model: models.Model) -> CommentEntity:
+    def _get_entity_item(self, model: models.Model) -> CommentEntity:
         return CommentEntity(
             id=model.id,
             relation=getattr(model, self.relation_property),
@@ -66,4 +66,4 @@ class CommentRepository(BaseRepository):
             parent_comment=model.parent_comment)
     
     def _get_multi_comment_entity(self, models: List[models.Model]) -> List[Optional[CommentEntity]]:
-        return [self._get_comment_entity(model) for model in models]
+        return [self._get_entity_item(model) for model in models]

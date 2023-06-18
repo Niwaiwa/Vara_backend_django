@@ -631,16 +631,19 @@ class PostCommentListCreateAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def get(self, request, post_id):
-        post = get_object_or_404(Post, pk=post_id)
-        post_comments = post.comments.filter(parent_comment=None).order_by('created_at')
-
+        parent_comment_id = None
         query = PostCommentParamSerializer(data=request.query_params)
         if query.is_valid():
             parent_comment_id = query.validated_data.get('parent')
-            if parent_comment_id:
-                post_comment = post.comments.filter(pk=parent_comment_id).first()
-                if post_comment:
-                    post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        if parent_comment_id:
+            post = get_object_or_404(Post, pk=post_id)
+            post_comment = post.comments.filter(pk=parent_comment_id).first()
+            if post_comment:
+                post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+        else:
+            post = get_object_or_404(Post, pk=post_id)
+            post_comments = post.comments.filter(parent_comment=None).order_by('created_at')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(post_comments, SMALL_PAGE_SIZE)

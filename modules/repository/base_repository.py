@@ -21,7 +21,7 @@ class BaseRepository(ABC):
         raise NotImplementedError()
     
     @abstractmethod
-    def update(self, data: Dict[str, Any]) -> None:
+    def update_one(self, data: Dict[str, Any]) -> None:
         raise NotImplementedError()
     
     @abstractmethod
