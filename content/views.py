@@ -10,7 +10,7 @@ from vara_backend.settings import CONTENT_PAGE_SIZE, SMALL_PAGE_SIZE
 
 
 from .models import Video, Tag, ImageSlide, Image, VideoLike, ImageSlideLike, Playlist, Post, PostComment \
-    , Forum, ForumThread, ForumPost
+    , Forum, ForumThread, ForumPost, ProfileComment, VideoComment, ImageSlideComment
 from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerializer, TagSerializer \
     , ImageSlideSerializer, ImageSlidePostSerializer, ImageSlidePutSerializer, ImageSerializer \
     , ImagePostSerializer, ImageSlideDetailSerializer, ImageSlideLikeSerializer, VideoLikeSerializer \
@@ -311,16 +311,17 @@ class VideoCommentListCreateAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def get(self, request, video_id):
-        video = get_object_or_404(Video, pk=video_id)
-        video_comments = video.comments.filter(parent_comment=None).order_by('created_at')
-
+        parent_comment_id = None
         query = VideoCommentParamSerializer(data=request.query_params)
         if query.is_valid():
             parent_comment_id = query.validated_data.get('parent')
-            if parent_comment_id:
-                video_comment = video.comments.filter(pk=parent_comment_id).first()
-                if video_comment:
-                    video_comments = video.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        video = get_object_or_404(Video, pk=video_id)
+        if parent_comment_id:
+            video_comment = get_object_or_404(VideoComment, pk=parent_comment_id)
+            video_comments = video.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+        else:
+            video_comments = video.comments.filter(parent_comment=None).order_by('created_at')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(video_comments, SMALL_PAGE_SIZE)
@@ -396,16 +397,17 @@ class ImageSlideCommentListCreateAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def get(self, request, images_id):
-        slide = get_object_or_404(ImageSlide, pk=images_id)
-        image_comments = slide.comments.filter(parent_comment=None).order_by('created_at')
-
+        parent_comment_id = None
         query = ImageSlideCommentParamSerializer(data=request.query_params)
         if query.is_valid():
             parent_comment_id = query.validated_data.get('parent')
-            if parent_comment_id:
-                image_comment = slide.comments.filter(pk=parent_comment_id).first()
-                if image_comment:
-                    image_comments = slide.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        slide = get_object_or_404(ImageSlide, pk=images_id)
+        if parent_comment_id:
+            image_comment = get_object_or_404(ImageSlideComment, pk=parent_comment_id)
+            image_comments = slide.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+        else:
+            image_comments = slide.comments.filter(parent_comment=None).order_by('created_at')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(image_comments, SMALL_PAGE_SIZE)
@@ -636,12 +638,11 @@ class PostCommentListCreateAPIView(views.APIView):
         if query.is_valid():
             parent_comment_id = query.validated_data.get('parent')
 
+        post = get_object_or_404(Post, pk=post_id)
         if parent_comment_id:
-            post = get_object_or_404(Post, pk=post_id)
             post_comment = get_object_or_404(PostComment, pk=parent_comment_id, post=post)
             post_comments = post.comments.filter(parent_comment=parent_comment_id).order_by('created_at')
         else:
-            post = get_object_or_404(Post, pk=post_id)
             post_comments = post.comments.filter(parent_comment=None).order_by('created_at')
 
         page = request.GET.get('page', 1)
@@ -718,16 +719,17 @@ class ProfileCommentListCreateAPIView(views.APIView):
     permission_classes = [IsAuthenticated | ReadOnly]
 
     def get(self, request, user_id):
-        user = get_object_or_404(User, pk=user_id)
-        profile_comments = user.profile_comments.filter(parent_comment=None).order_by('created_at')
-
+        parent_comment_id = None
         query = ProfileCommentParamSerializer(data=request.query_params)
         if query.is_valid():
             parent_comment_id = query.validated_data.get('parent')
-            if parent_comment_id:
-                profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
-                if profile_comment:
-                    profile_comments = user.profile_comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+
+        user = get_object_or_404(User, pk=user_id)
+        if parent_comment_id:
+            profile_comment = get_object_or_404(ProfileComment, pk=parent_comment_id, profile=user)
+            profile_comments = user.profile_comments.filter(parent_comment=parent_comment_id).order_by('created_at')
+        else:
+            profile_comments = user.profile_comments.filter(parent_comment=None).order_by('created_at')
 
         page = request.GET.get('page', 1)
         paginator = Paginator(profile_comments, SMALL_PAGE_SIZE)
