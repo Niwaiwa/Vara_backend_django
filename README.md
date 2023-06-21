@@ -28,18 +28,17 @@
   - [*] Views
   - [*] Likes
   - [*] Ratings
-  - [ ] Thumbnails
-    - [ ] List view
-    - [ ] Video thumbnails * 12
+  - [*] Thumbnails
+    - [*] List view
+    - [*] Video thumbnails * 12
 - [*] Images
   - [*] Comments
   - [*] Views
   - [*] Likes
   - [*] Ratings
-  - [ ] Thumbnails
-    - [ ] List view
-    - [ ] Large image thumbnail * 1
-    - [ ] Original images
+  - [*] Thumbnails
+    - [*] List view
+    - [*] Large image thumbnail * 1
 - [*] Tags
 - [*] Forums
   - [*] Threads
