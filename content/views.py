@@ -24,6 +24,8 @@ from .serializers import VideoSerializer, VideoPostSerializer, VideoPutSerialize
     , ForumPostSerializer, ForumPostPostSerializer, ForumThreadPutSerializer, ForumPostPutSerializer
 from core.models import User, Notification
 from utils.commons import ReadOnly
+from utils.utils import generate_video_thumbnails, generate_image_thumbnail
+
 
 sort_map = {
     'date': '-created_at',
@@ -60,6 +62,8 @@ class VideoListCreateAPIView(views.APIView):
         if serializer.is_valid():
             # serializer.tags.add(*request.data.get('tags'))
             serializer.save(user=request.user)
+            thumbnail_result = generate_video_thumbnails(serializer.instance.video_file.path, serializer.instance.id)
+            print(f'video id {serializer.instance.id} thumbnail result: {thumbnail_result}')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -164,6 +168,9 @@ class ImageSlideListCreateAPIView(views.APIView):
         if serializer.is_valid():
             serializer.save(user=request.user)
             serializer = ImageSlideDetailSerializer(serializer.instance, context={'request': request})
+            for image in serializer.instance.images.all():
+                thumbnail_result = generate_image_thumbnail(image.image_file.path, serializer.instance.id, image.id)
+                print(f'image id {image.id} thumbnail result: {thumbnail_result}')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
