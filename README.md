@@ -30,8 +30,7 @@
   - [*] Ratings
   - [ ] Thumbnails
     - [ ] List view
-    - [ ] Video thumbnails
-    - [ ] Large video thumbnail
+    - [ ] Video thumbnails * 12
 - [*] Images
   - [*] Comments
   - [*] Views
@@ -39,7 +38,7 @@
   - [*] Ratings
   - [ ] Thumbnails
     - [ ] List view
-    - [ ] Large image thumbnail
+    - [ ] Large image thumbnail * 1
     - [ ] Original images
 - [*] Tags
 - [*] Forums
