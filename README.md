@@ -1,5 +1,6 @@
 # Vara_backend
- A video site backend.
+
+A video site backend.
 
 ## Required functions
 
@@ -22,7 +23,6 @@
   - [*] Notifications
   - [*] Notifications settings
   - [ ] Blacklist tags
-  - [ ] Polls
 - [*] Videos
   - [*] Comments
   - [*] Views
@@ -43,8 +43,4 @@
 - [*] Forums
   - [*] Threads
     - [*] Posts
-- [ ] Languages
-  - [ ] English
-  - [ ] Japanese
 - [ ] Trending
-
