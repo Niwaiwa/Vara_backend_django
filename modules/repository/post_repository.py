@@ -15,6 +15,9 @@ class PostRepository(BaseRepository):
             post = self.model_class.objects.filter(id=id).first()
         except ObjectDoesNotExist:
             return None
+        
+        if post is None:
+            return None
 
         return self._get_entity_item(post)
     

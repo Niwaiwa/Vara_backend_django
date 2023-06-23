@@ -23,6 +23,9 @@ class CommentRepository(BaseRepository):
         except ObjectDoesNotExist:
             return None
 
+        if model is None:
+            return None
+
         return self._get_entity_item(model)
     
     def filter(self, order: str = 'created_at', **filter_kwargs) -> List[Optional[CommentEntity]]:
