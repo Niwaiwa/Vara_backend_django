@@ -27,12 +27,12 @@ class SignupView(views.APIView):
         try:
             data = JSONParser().parse(request)
             serializer = UserSignupSerializer(data=data)
-            if serializer.is_valid():
-                user = serializer.save()
-                notification_settings = NotificationSettings.objects.create(user=user)
-                return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
-            else:
+            if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            user = serializer.save()
+            notification_settings = NotificationSettings.objects.create(user=user)
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -42,21 +42,21 @@ class LoginView(views.APIView):
         try:
             data = JSONParser().parse(request)
             serializer = UserLoginSerializer(data=data)
-            if serializer.is_valid():
-                username = serializer.validated_data['username']
-                password = serializer.validated_data['password']
-                user = authenticate(request, username=username, password=password)
-                if user:
-                    if not user.is_active:
-                        return Response({"result": 'error', 'message': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
-                    login(request, user)
-                    auth_token = RefreshToken.for_user(request.user)
-                    # return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
-                    return Response({'token': str(auth_token)}, status=status.HTTP_200_OK)
-                else:
-                    return Response({"result": 'error', 'message': 'Unable to log in with provided credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
-            else:
+            if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(request, username=username, password=password)
+            if not user:
+                return Response({"result": 'error', 'message': 'Unable to log in with provided credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+            if not user.is_active:
+                return Response({"result": 'error', 'message': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            login(request, user)
+            auth_token = RefreshToken.for_user(request.user)
+            # return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+            return Response({'token': str(auth_token)}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -287,15 +287,15 @@ class MessageThreadView(views.APIView):
             serializer = MessageThreadPostSerializer(data=data)
             if not serializer.is_valid():
                 return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                user = request.user
-                recipient = serializer.validated_data.get('recipient')
-                title = serializer.validated_data.get('title')
-                content = serializer.validated_data.get('content')
 
-                message_thread = MessageThread.objects.create(sender=user, recipient=recipient, title=title)
-                message = Message.objects.create(thread=message_thread, sender=user, content=content)
-                return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
+            user = request.user
+            recipient = serializer.validated_data.get('recipient')
+            title = serializer.validated_data.get('title')
+            content = serializer.validated_data.get('content')
+
+            message_thread = MessageThread.objects.create(sender=user, recipient=recipient, title=title)
+            message = Message.objects.create(thread=message_thread, sender=user, content=content)
+            return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -325,13 +325,13 @@ class MessageThreadMessageView(views.APIView):
             serializer = MessagePostSerializer(data=data)
             if not serializer.is_valid():
                 return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                user = request.user
-                message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
-                content = serializer.validated_data.get('content')
 
-                message = Message.objects.create(thread=message_thread, sender=user, content=content)
-                return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
+            user = request.user
+            message_thread = get_object_or_404(MessageThread, pk=message_thread_id)
+            content = serializer.validated_data.get('content')
+
+            message = Message.objects.create(thread=message_thread, sender=user, content=content)
+            return Response({"result": 'success', 'message': 'Message sent!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -362,13 +362,13 @@ class NotificationView(views.APIView):
             serializer = NotificationPostSerializer(data=data)
             if not serializer.is_valid():
                 return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                user_id = serializer.validated_data.get('user_id')
-                user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
-                message = serializer.validated_data.get('message')
 
-                notification = Notification.objects.create(user=user, message=message)
-                return Response({"result": 'success', 'message': 'Notification sent!'}, status=status.HTTP_200_OK)
+            user_id = serializer.validated_data.get('user_id')
+            user = get_object_or_404(User, pk=user_id, is_active=True, is_staff=False, is_superuser=False)
+            message = serializer.validated_data.get('message')
+
+            notification = Notification.objects.create(user=user, message=message)
+            return Response({"result": 'success', 'message': 'Notification sent!'}, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -383,4 +383,3 @@ class NotificationDetailView(views.APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        

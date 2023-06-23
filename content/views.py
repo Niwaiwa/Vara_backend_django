@@ -59,13 +59,13 @@ class VideoListCreateAPIView(views.APIView):
 
     def post(self, request):
         serializer = VideoPostSerializer(data=request.data)
-        if serializer.is_valid():
-            # serializer.tags.add(*request.data.get('tags'))
-            serializer.save(user=request.user)
-            thumbnail_result = generate_video_thumbnails(serializer.instance.video_file.path, serializer.instance.id)
-            print(f'video id {serializer.instance.id} thumbnail result: {thumbnail_result}')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # serializer.tags.add(*request.data.get('tags'))
+        serializer.save(user=request.user)
+        thumbnail_result = generate_video_thumbnails(serializer.instance.video_file.path, serializer.instance.id)
+        print(f'video id {serializer.instance.id} thumbnail result: {thumbnail_result}')
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class VideoDetailAPIView(views.APIView):
@@ -81,10 +81,11 @@ class VideoDetailAPIView(views.APIView):
     def put(self, request, pk):
         video = get_object_or_404(Video, pk=pk)
         serializer = VideoPutSerializer(video, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data)
 
     def delete(self, request, pk):
         video = get_object_or_404(Video, pk=pk)
@@ -123,10 +124,11 @@ class TagAPIView(views.APIView):
         try:
             data = JSONParser().parse(request)
             serializer = TagSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -188,11 +190,12 @@ class ImageSlideDetailAPIView(views.APIView):
     def put(self, request, pk):
         imageslide = get_object_or_404(ImageSlide, pk=pk)
         serializer = ImageSlidePutSerializer(imageslide, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            response_serializer = ImageSlideDetailSerializer(serializer.instance, context={'request': request})
-            return Response(response_serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        response_serializer = ImageSlideDetailSerializer(serializer.instance, context={'request': request})
+        return Response(response_serializer.data)
     
     def delete(self, request, pk):
         imageslide = get_object_or_404(ImageSlide, pk=pk)
@@ -216,12 +219,12 @@ class ImageListCreateAPIView(views.APIView):
     def post(self, request, images_id):
         image_slide = get_object_or_404(ImageSlide, pk=images_id)
         serializer = ImagePostSerializer(data=request.data)
-        if serializer.is_valid():
-            # serializer.tags.add(*request.data.get('tags'))
-            serializer.save(slide=image_slide)
-            response_serializer = ImageSerializer(serializer.instance, context={'request': request})
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # serializer.tags.add(*request.data.get('tags'))
+        serializer.save(slide=image_slide)
+        response_serializer = ImageSerializer(serializer.instance, context={'request': request})
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ImageDetailAPIView(views.APIView):
@@ -374,16 +377,17 @@ class VideoCommentDetailAPIView(views.APIView):
             video = get_object_or_404(Video, pk=video_id)
             data = JSONParser().parse(request)
             serializer = VideoCommentPutSerializer(data=data)
-            if serializer.is_valid():
-                video_comment = video.comments.filter(user=request.user, pk=comment_id).first()
-                if video_comment:
-                    video_comment.content = serializer.validated_data.get('content')
-                    video_comment.save()
-                    response_serializer = VideoCommentSerializer(video_comment)
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            video_comment = video.comments.filter(user=request.user, pk=comment_id).first()
+            if not video_comment:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            video_comment.content = serializer.validated_data.get('content')
+            video_comment.save()
+            response_serializer = VideoCommentSerializer(video_comment)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -427,27 +431,28 @@ class ImageSlideCommentListCreateAPIView(views.APIView):
             slide = get_object_or_404(ImageSlide, pk=images_id)
             data = JSONParser().parse(request)
             serializer = ImageSlideCommentPostSerializer(data=data)
-            if serializer.is_valid():
-                parent_comment_id = serializer.validated_data.get('parent_comment_id')
-                if parent_comment_id:
-                    image_comment = slide.comments.filter(pk=parent_comment_id).first()
-                    if image_comment:
-                        serializer.save(slide=slide, user=request.user, parent_comment=image_comment)
-                        if slide.user != request.user:
-                            notification = Notification.objects.create(
-                                user=slide.user, message=f'{request.user.nickname} replied to your comment', url=f'/images/{slide.id}')
-                        response_serializer = ImageSlideCommentSerializer(serializer.instance)
-                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-                    else:
-                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    serializer.save(slide=slide, user=request.user)
-                    if slide.user != request.user:
-                        notification = Notification.objects.create(
-                            user=slide.user, message=f'{request.user.nickname} commented on your images', url=f'/images/{slide.id}')
-                    response_serializer = ImageSlideCommentSerializer(serializer.instance)
-                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            parent_comment_id = serializer.validated_data.get('parent_comment_id')
+            if parent_comment_id:
+                image_comment = slide.comments.filter(pk=parent_comment_id).first()
+                if not image_comment:
+                    return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+                serializer.save(slide=slide, user=request.user, parent_comment=image_comment)
+                if slide.user != request.user:
+                    notification = Notification.objects.create(
+                        user=slide.user, message=f'{request.user.nickname} replied to your comment', url=f'/images/{slide.id}')
+                response_serializer = ImageSlideCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                serializer.save(slide=slide, user=request.user)
+                if slide.user != request.user:
+                    notification = Notification.objects.create(
+                        user=slide.user, message=f'{request.user.nickname} commented on your images', url=f'/images/{slide.id}')
+                response_serializer = ImageSlideCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -460,16 +465,17 @@ class ImageSlideCommentDetailAPIView(views.APIView):
             slide = get_object_or_404(ImageSlide, pk=images_id)
             data = JSONParser().parse(request)
             serializer = ImageSlideCommentPutSerializer(data=data)
-            if serializer.is_valid():
-                image_comment = slide.comments.filter(user=request.user, pk=comment_id).first()
-                if image_comment:
-                    image_comment.content = serializer.validated_data.get('content')
-                    image_comment.save()
-                    response_serializer = ImageSlideCommentSerializer(image_comment)
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            image_comment = slide.comments.filter(user=request.user, pk=comment_id).first()
+            if not image_comment:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            image_comment.content = serializer.validated_data.get('content')
+            image_comment.save()
+            response_serializer = ImageSlideCommentSerializer(image_comment)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -600,11 +606,12 @@ class PostAPIView(views.APIView):
         try:
             data = JSONParser().parse(request)
             serializer = PostEditSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save(user=request.user)
-                serializer = PostDetailSerializer(serializer.instance)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save(user=request.user)
+            serializer = PostDetailSerializer(serializer.instance)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -622,11 +629,12 @@ class PostDetailAPIView(views.APIView):
         try:
             data = JSONParser().parse(request)
             serializer = PostEditSerializer(post, data=data)
-            if serializer.is_valid():
-                serializer.save(user=request.user)
-                serializer = PostDetailSerializer(serializer.instance)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save(user=request.user)
+            serializer = PostDetailSerializer(serializer.instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -663,27 +671,28 @@ class PostCommentListCreateAPIView(views.APIView):
             post = get_object_or_404(Post, pk=post_id)
             data = JSONParser().parse(request)
             serializer = PostCommentPostSerializer(data=data)
-            if serializer.is_valid():
-                parent_comment_id = serializer.validated_data.get('parent_comment_id')
-                if parent_comment_id:
-                    post_comment = post.comments.filter(pk=parent_comment_id).first()
-                    if post_comment:
-                        serializer.save(post=post, user=request.user, parent_comment=post_comment)
-                        if post.user != request.user:
-                            notification = Notification.objects.create(
-                                user=post.user, message=f'{request.user.nickname} replied to your comment', url=f'/post/{post.id}')
-                        response_serializer = PostCommentSerializer(serializer.instance)
-                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-                    else:
-                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    serializer.save(post=post, user=request.user)
-                    if post.user != request.user:
-                        notification = Notification.objects.create(
-                            user=post.user, message=f'{request.user.nickname} commented on your post', url=f'/post/{post.id}')
-                    response_serializer = PostCommentSerializer(serializer.instance)
-                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            parent_comment_id = serializer.validated_data.get('parent_comment_id')
+            if parent_comment_id:
+                post_comment = post.comments.filter(pk=parent_comment_id).first()
+                if not post_comment:
+                    return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+                serializer.save(post=post, user=request.user, parent_comment=post_comment)
+                if post.user != request.user:
+                    notification = Notification.objects.create(
+                        user=post.user, message=f'{request.user.nickname} replied to your comment', url=f'/post/{post.id}')
+                response_serializer = PostCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                serializer.save(post=post, user=request.user)
+                if post.user != request.user:
+                    notification = Notification.objects.create(
+                        user=post.user, message=f'{request.user.nickname} commented on your post', url=f'/post/{post.id}')
+                response_serializer = PostCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -696,16 +705,17 @@ class PostCommentDetailAPIView(views.APIView):
             post = get_object_or_404(Post, pk=post_id)
             data = JSONParser().parse(request)
             serializer = PostCommentPutSerializer(data=data)
-            if serializer.is_valid():
-                post_comment = post.comments.filter(user=request.user, pk=comment_id).first()
-                if post_comment:
-                    post_comment.content = serializer.validated_data.get('content')
-                    post_comment.save()
-                    response_serializer = PostCommentSerializer(post_comment)
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            post_comment = post.comments.filter(user=request.user, pk=comment_id).first()
+            if not post_comment:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            post_comment.content = serializer.validated_data.get('content')
+            post_comment.save()
+            response_serializer = PostCommentSerializer(post_comment)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -749,27 +759,28 @@ class ProfileCommentListCreateAPIView(views.APIView):
             user = get_object_or_404(User, pk=user_id)
             data = JSONParser().parse(request)
             serializer = ProfileCommentPostSerializer(data=data)
-            if serializer.is_valid():
-                parent_comment_id = serializer.validated_data.get('parent_comment_id')
-                if parent_comment_id:
-                    profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
-                    if profile_comment:
-                        serializer.save(profile=user, user=request.user, parent_comment=profile_comment)
-                        if user != request.user:
-                            notification = Notification.objects.create(
-                                user=user, message=f'{request.user.nickname} replied to your comment', url=f'/profile/{user.username}')
-                        response_serializer = ProfileCommentSerializer(serializer.instance)
-                        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-                    else:
-                        return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    serializer.save(profile=user, user=request.user)
-                    if user != request.user:
-                        notification = Notification.objects.create(
-                            user=user, message=f'{request.user.nickname} commented on your profile', url=f'/profile/{user.username}')
-                    response_serializer = ProfileCommentSerializer(serializer.instance)
-                    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            parent_comment_id = serializer.validated_data.get('parent_comment_id')
+            if parent_comment_id:
+                profile_comment = user.profile_comments.filter(pk=parent_comment_id).first()
+                if not profile_comment:
+                    return Response({"result": "error", "message": "Invalid parent comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+                serializer.save(profile=user, user=request.user, parent_comment=profile_comment)
+                if user != request.user:
+                    notification = Notification.objects.create(
+                        user=user, message=f'{request.user.nickname} replied to your comment', url=f'/profile/{user.username}')
+                response_serializer = ProfileCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                serializer.save(profile=user, user=request.user)
+                if user != request.user:
+                    notification = Notification.objects.create(
+                        user=user, message=f'{request.user.nickname} commented on your profile', url=f'/profile/{user.username}')
+                response_serializer = ProfileCommentSerializer(serializer.instance)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -782,16 +793,17 @@ class ProfileCommentDetailAPIView(views.APIView):
             user = get_object_or_404(User, pk=user_id)
             data = JSONParser().parse(request)
             serializer = ProfileCommentPutSerializer(data=data)
-            if serializer.is_valid():
-                profile_comment = user.profile_comments.filter(user=request.user, pk=comment_id).first()
-                if profile_comment:
-                    profile_comment.content = serializer.validated_data.get('content')
-                    profile_comment.save()
-                    response_serializer = ProfileCommentSerializer(profile_comment)
-                    return Response(response_serializer.data, status=status.HTTP_200_OK)
-                else:
-                    return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            profile_comment = user.profile_comments.filter(user=request.user, pk=comment_id).first()
+            if not profile_comment:
+                return Response({"result": "error", "message": "Invalid comment id"}, status=status.HTTP_400_BAD_REQUEST)
+
+            profile_comment.content = serializer.validated_data.get('content')
+            profile_comment.save()
+            response_serializer = ProfileCommentSerializer(profile_comment)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         except JSONDecodeError:
             return Response({"result": "error", "message": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -864,18 +876,19 @@ class ForumThreadAPIView(views.APIView):
             forum = get_object_or_404(Forum, pk=forum_id)
             data = JSONParser().parse(request)
             thread_serializer = ForumThreadPostSerializer(data=data)
-            if thread_serializer.is_valid():
-                thread_validate_data = thread_serializer.validated_data
-                content = thread_validate_data.pop('content', None)
-                thread = ForumThread.objects.create(user=request.user, forum=forum, **thread_validate_data)
-                post = ForumPost.objects.create(user=request.user, thread=thread, content=content)
+            if not thread_serializer.is_valid():
+                return Response({"result": 'error', 'message': thread_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-                forum.increment_threads_count()
-                forum.increment_posts_count()
-                thread.increment_posts_count()
-                thread_serializer = ForumThreadSerializer(thread)
-                return Response(thread_serializer.data, status=status.HTTP_201_CREATED)
-            return Response({"result": 'error', 'message': thread_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            thread_validate_data = thread_serializer.validated_data
+            content = thread_validate_data.pop('content', None)
+            thread = ForumThread.objects.create(user=request.user, forum=forum, **thread_validate_data)
+            post = ForumPost.objects.create(user=request.user, thread=thread, content=content)
+
+            forum.increment_threads_count()
+            forum.increment_posts_count()
+            thread.increment_posts_count()
+            thread_serializer = ForumThreadSerializer(thread)
+            return Response(thread_serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -946,13 +959,14 @@ class ForumPostAPIView(views.APIView):
             thread = get_object_or_404(ForumThread, pk=thread_id)
             data = JSONParser().parse(request)
             serializer = ForumPostPostSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save(user=request.user, thread=thread)
-                forum.increment_posts_count()
-                thread.increment_posts_count()
-                serializer = ForumPostSerializer(serializer.instance)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                return Response({"result": 'error', 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save(user=request.user, thread=thread)
+            forum.increment_posts_count()
+            thread.increment_posts_count()
+            serializer = ForumPostSerializer(serializer.instance)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except JSONDecodeError:
             return JsonResponse({"result": 'error', 'message': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
         
