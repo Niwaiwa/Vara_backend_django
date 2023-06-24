@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Niwaiwa <po2846@gmail.com>"]
 readme = "README.md"
-packages = [{include = "vara_backend"}]
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,6 +15,7 @@ psycopg2 = "^2.9.6"
 pillow = "^9.5.0"
 djangorestframework-simplejwt = "^5.2.2"
 moviepy = "^1.0.3"
+gunicorn = "^20.1.0"
 
 
 [build-system]
